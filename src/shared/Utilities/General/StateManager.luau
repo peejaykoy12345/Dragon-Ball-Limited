@@ -38,13 +38,13 @@ function StateManager._ReplicateState(char: Model, action: "Add" | "Remove", sta
 	if not player then return end
 
 	if type(state) == "table" then
-		Network.Replication.Update.sendTo({
+		Network.Replication.packets.Update.sendTo({
 			Name = "State",
 			Args = { Action = action },
 			Value = { arrayofstrings = state },
 		}, player)
 	else
-		Network.Replication.Update.sendTo({
+		Network.Replication.packets.Update.sendTo({
 			Name = "State",
 			Args = { Type = state, Action = action },
 			Value = if value ~= nil then StateManager._PackValue(value) else {},
@@ -231,7 +231,7 @@ end
 
 if IsClient and not initialized then
 	initialized = true
-	Network.Replication.Update.listen(StateManager._OnReplicationUpdate)
+	Network.Replication.packets.Update.listen(StateManager._OnReplicationUpdate)
 end
 
 return StateManager
