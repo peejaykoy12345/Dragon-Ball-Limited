@@ -145,7 +145,8 @@ function FlyController:_GetAnimationName(forwardScalar: number, rightScalar: num
 	if forwardScalar == 0 and rightScalar == 0 then return "Idle" end
 
 	if not isShiftlocked then
-		return if self.boostHeld and forwardScalar > 0 then "FastFlight" else "Forward"
+		if self.boostHeld then return "FastFlight" end
+		return "Forward"
 	end
 
 	if forwardScalar > 0 then
