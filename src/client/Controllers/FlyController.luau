@@ -3,35 +3,28 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local Animations = ReplicatedStorage.Assets.Animations
+local FlyAnimations = Animations.Default.Flight
+
 local Modules = ReplicatedStorage.Modules
 local GeneralUtilities = Modules.Utilities.General
 local StateManager = require(GeneralUtilities.StateManager)
+local AnimationPlayer = require(Modules.Utilities.Media.Animation)
 
 local Network = require(Modules.Network)
 
 local FlyController = {}
 
-local FLY_SPEED = 50
-local ALIGN_RESPONSIVENESS = 15 
-local SHIFTLOCK_FACE_SPEED = 10 
+local CONFIG = {
+	FLY_SPEED = 50,
+	BOOST_MULTIPLIER = 2,
+	ALIGN_RESPONSIVENESS = 30,
+	HOLD_DURATION = 0.5,
+}
 
 function FlyController:_GetCameraInputScalars(): (number, number)
 	local moveVector = self.controls:GetMoveVector()
-
-	local camCFrame = workspace.CurrentCamera.CFrame
-	local flatLook = Vector3.new(camCFrame.LookVector.X, 0, camCFrame.LookVector.Z)
-	local flatRight = Vector3.new(camCFrame.RightVector.X, 0, camCFrame.RightVector.Z)
-
-	flatLook = flatLook.Unit
-	flatRight = flatRight.Unit
-
-	local forwardScalar = moveVector:Dot(flatLook)
-	local rightScalar = moveVector:Dot(flatRight)
-
-	print("[_GetCameraInputScalars] moveVector:", moveVector, "flatLook:", flatLook, "flatRight:", flatRight)
-	print("[_GetCameraInputScalars] forwardScalar:", forwardScalar, "rightScalar:", rightScalar)
-
-	return forwardScalar, rightScalar
+	return -moveVector.Z, moveVector.X
 end
 
 function FlyController:_GetCameraRelativeDirection(forwardScalar: number, rightScalar: number): Vector3
@@ -42,10 +35,25 @@ function FlyController:_GetCameraRelativeDirection(forwardScalar: number, rightS
 		direction = direction.Unit
 	end
 
-	print("[_GetCameraRelativeDirection] camLook:", camCFrame.LookVector, "camRight:", camCFrame.RightVector)
-	print("[_GetCameraRelativeDirection] direction:", direction)
-
 	return direction
+end
+
+function FlyController:_GetLockOnTarget(char: Model): Model?
+	if not char:GetAttribute("LockOn") then return nil end
+
+	local targetValue = char:FindFirstChild("LockOnTarget")
+	if not targetValue or not targetValue:IsA("ObjectValue") then return nil end
+
+	return targetValue.Value
+end
+
+function FlyController:_UpdateLockOnFacing(hrp: BasePart, targetHrp: BasePart)
+	if not self.alignOrientation then return end
+
+	local toTarget = targetHrp.Position - hrp.Position
+	if toTarget.Magnitude < 0.05 then return end
+
+	self.alignOrientation.CFrame = CFrame.new(Vector3.zero, toTarget.Unit)
 end
 
 function FlyController:_UpdateFreeCamFacing(forwardScalar: number, rightScalar: number)
@@ -55,25 +63,14 @@ function FlyController:_UpdateFreeCamFacing(forwardScalar: number, rightScalar: 
 	local direction = self:_GetCameraRelativeDirection(forwardScalar, rightScalar)
 	if direction.Magnitude < 0.05 then return end
 
-	print("[_UpdateFreeCamFacing] setting alignOrientation target toward:", direction)
-
 	self.alignOrientation.CFrame = CFrame.new(Vector3.zero, direction)
 end
 
-function FlyController:_UpdateShiftlockFacing(dt: number)
-	local char = self.plr.Character
-	local hrp = char and char:FindFirstChild("HumanoidRootPart")
-	if not hrp then return end
+function FlyController:_UpdateShiftlockFacing()
+	if not self.alignOrientation then return end
 
 	local camLook = workspace.CurrentCamera.CFrame.LookVector
-	local targetCFrame = CFrame.new(hrp.Position, hrp.Position + camLook)
-	local alpha = math.clamp(dt * SHIFTLOCK_FACE_SPEED, 0, 1)
-
-	print("[_UpdateShiftlockFacing] camLook:", camLook, "alpha:", alpha, "hrp.LookVector before:", hrp.CFrame.LookVector)
-
-	hrp.CFrame = hrp.CFrame:Lerp(targetCFrame, alpha)
-
-	print("[_UpdateShiftlockFacing] hrp.LookVector after:", hrp.CFrame.LookVector)
+	self.alignOrientation.CFrame = CFrame.new(Vector3.zero, camLook)
 end
 
 function FlyController:_CreateFlyConstraints(hrp: BasePart)
@@ -94,7 +91,7 @@ function FlyController:_CreateFlyConstraints(hrp: BasePart)
 	alignOrientation.Attachment0 = attachment
 	alignOrientation.Mode = Enum.OrientationAlignmentMode.OneAttachment
 	alignOrientation.MaxTorque = math.huge
-	alignOrientation.Responsiveness = ALIGN_RESPONSIVENESS
+	alignOrientation.Responsiveness = CONFIG.ALIGN_RESPONSIVENESS
 	alignOrientation.CFrame = hrp.CFrame.Rotation
 	alignOrientation.Parent = hrp
 
@@ -118,6 +115,48 @@ function FlyController:_DestroyFlyConstraints()
 	end
 end
 
+function FlyController:_SetAnimation(animName: string?)
+	local char = self.plr.Character
+	if not char then return end
+
+	if self.currentFlyAnim == animName then return end
+
+	if self.currentFlyAnim then
+		local oldAnim = FlyAnimations:FindFirstChild(self.currentFlyAnim)
+		if oldAnim then
+			AnimationPlayer:Stop(char, oldAnim)
+		end
+	end
+
+	self.currentFlyAnim = animName
+
+	if animName then
+		local newAnim = FlyAnimations:FindFirstChild(animName)
+		if newAnim then
+			AnimationPlayer:Play(char, newAnim)
+		end
+	end
+end
+
+function FlyController:_GetAnimationName(forwardScalar: number, rightScalar: number, isShiftlocked: boolean): string
+	if self.upHeld then return "Up" end
+	if self.downHeld then return "Down" end
+	if forwardScalar == 0 and rightScalar == 0 then return "Idle" end
+
+	if not isShiftlocked then
+		return if self.boostHeld and forwardScalar > 0 then "FastFlight" else "Forward"
+	end
+
+	if forwardScalar > 0 then
+		return if self.boostHeld then "FastFlight" else "Forward"
+	end
+	if forwardScalar < 0 then return "Backward" end
+	if rightScalar > 0 then return "Right" end
+	if rightScalar < 0 then return "Left" end
+
+	return "Idle"
+end
+
 function FlyController:_StartFly()
 	local char = self.plr.Character
 	if not char then return end
@@ -129,18 +168,22 @@ function FlyController:_StartFly()
 	if StateManager.isActionBlocked(char) then return end
 
 	self.isFlying = true
-	self.doubleJumpAvailable = false
-
-	--hum:ChangeState(Enum.HumanoidStateType.Physics)
-
 	self:_CreateFlyConstraints(hrp)
+	self:_SetAnimation("Idle")
+	char:SetAttribute("Flying", true)
 end
 
 function FlyController:_StopFly()
 	if not self.isFlying then return end
 
 	self.isFlying = false
+	self:_SetAnimation(nil)
 	self:_DestroyFlyConstraints()
+
+	local char = self.plr.Character
+	if char then
+		char:SetAttribute("Flying", false)
+	end
 end
 
 function FlyController:Init()
@@ -150,22 +193,20 @@ function FlyController:Init()
 	self.controls = playerModule:GetControls()
 
 	self.isFlying = false
-	self.doubleJumpAvailable = true
 	self.attachment = nil
 	self.linearVelocity = nil
 	self.alignOrientation = nil
+	self.currentFlyAnim = nil
+	self.spaceHeldStart = nil
+	self.upHeld = false
+	self.downHeld = false
+	self.boostHeld = false
 
 	local function onCharacterAdded(char)
-		self.doubleJumpAvailable = true
 		self:_StopFly()
+		char:SetAttribute("Flying", false)
 
 		local hum = char:WaitForChild("Humanoid")
-
-		hum.StateChanged:Connect(function(_, new)
-			if new == Enum.HumanoidStateType.Landed or new == Enum.HumanoidStateType.Running then
-				self.doubleJumpAvailable = true
-			end
-		end)
 
 		hum.Died:Connect(function()
 			self:_StopFly()
@@ -177,28 +218,44 @@ function FlyController:Init()
 	end
 	self.plr.CharacterAdded:Connect(onCharacterAdded)
 
-	UserInputService.JumpRequest:Connect(function()
-		local char = self.plr.Character
-		if not char then return end
+	UserInputService.InputBegan:Connect(function(input, gameProcessed)
+		if gameProcessed then return end
 
-		local hum = char:FindFirstChildWhichIsA("Humanoid")
-		if not hum then return end
-
-		if self.isFlying then
-			self:_StopFly()
-			return
+		if input.KeyCode == Enum.KeyCode.Space then
+			if self.isFlying then
+				self:_StopFly()
+			else
+				self.spaceHeldStart = tick()
+			end
+		elseif input.KeyCode == Enum.KeyCode.F then
+			self.upHeld = true
+		elseif input.KeyCode == Enum.KeyCode.G then
+			self.downHeld = true
+		elseif input.KeyCode == Enum.KeyCode.Z then
+			self.boostHeld = true
 		end
+	end)
 
-		local state = hum:GetState()
-		local isAirborne = state == Enum.HumanoidStateType.Jumping
-			or state == Enum.HumanoidStateType.Freefall
-
-		if isAirborne and self.doubleJumpAvailable then
-			self:_StartFly()
+	UserInputService.InputEnded:Connect(function(input)
+		if input.KeyCode == Enum.KeyCode.Space then
+			self.spaceHeldStart = nil
+		elseif input.KeyCode == Enum.KeyCode.F then
+			self.upHeld = false
+		elseif input.KeyCode == Enum.KeyCode.G then
+			self.downHeld = false
+		elseif input.KeyCode == Enum.KeyCode.Z then
+			self.boostHeld = false
 		end
 	end)
 
 	RunService.Heartbeat:Connect(function(dt)
+		if self.spaceHeldStart and not self.isFlying then
+			if (tick() - self.spaceHeldStart) >= CONFIG.HOLD_DURATION then
+				self.spaceHeldStart = nil
+				self:_StartFly()
+			end
+		end
+
 		if not self.isFlying then return end
 		if not self.linearVelocity then return end
 
@@ -208,36 +265,32 @@ function FlyController:Init()
 
 		local forwardScalar, rightScalar = self:_GetCameraInputScalars()
 		local isShiftlocked = UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
+		local speed = if self.boostHeld then CONFIG.FLY_SPEED * CONFIG.BOOST_MULTIPLIER else CONFIG.FLY_SPEED
 
-		--print("[Heartbeat] isShiftlocked:", isShiftlocked, "hrp.LookVector:", hrp.CFrame.LookVector)
+		if self.upHeld or self.downHeld then
+			local vertical = 0
+			if self.upHeld then vertical += 1 end
+			if self.downHeld then vertical -= 1 end
+			self.linearVelocity.VectorVelocity = Vector3.new(0, vertical * speed, 0)
+		elseif forwardScalar == 0 and rightScalar == 0 then
+			self.linearVelocity.VectorVelocity = Vector3.zero
+		else
+			local direction = self:_GetCameraRelativeDirection(forwardScalar, rightScalar)
+			self.linearVelocity.VectorVelocity = direction * speed
+		end
 
-		if isShiftlocked then
-			self:_UpdateShiftlockFacing(dt)
+		local lockOnTarget = self:_GetLockOnTarget(char)
+		local lockOnTargetHrp = lockOnTarget and lockOnTarget:FindFirstChild("HumanoidRootPart")
 
-			if forwardScalar == 0 and rightScalar == 0 then
-				self.linearVelocity.VectorVelocity = Vector3.zero
-				--print("[Heartbeat][shiftlock] no input, VectorVelocity = zero")
-			else
-				local direction = self:_GetCameraRelativeDirection(forwardScalar, rightScalar)
-
-				--print("[Heartbeat][shiftlock] direction:", direction, "-> VectorVelocity:", direction * FLY_SPEED)
-
-				self.linearVelocity.VectorVelocity = direction * FLY_SPEED
-			end
+		if lockOnTargetHrp then
+			self:_UpdateLockOnFacing(hrp, lockOnTargetHrp)
+		elseif isShiftlocked then
+			self:_UpdateShiftlockFacing()
 		else
 			self:_UpdateFreeCamFacing(forwardScalar, rightScalar)
-
-			if forwardScalar == 0 and rightScalar == 0 then
-				self.linearVelocity.VectorVelocity = Vector3.zero
-				--print("[Heartbeat][freecam] no input, VectorVelocity = zero")
-			else
-				local direction = self:_GetCameraRelativeDirection(forwardScalar, rightScalar)
-
-				--print("[Heartbeat][freecam] direction:", direction, "-> VectorVelocity:", direction * FLY_SPEED)
-
-				self.linearVelocity.VectorVelocity = direction * FLY_SPEED
-			end
 		end
+
+		self:_SetAnimation(self:_GetAnimationName(forwardScalar, rightScalar, isShiftlocked))
 	end)
 end
 
