@@ -233,7 +233,7 @@ function FlyController:Init()
 			self.upHeld = true
 		elseif input.KeyCode == Enum.KeyCode.G then
 			self.downHeld = true
-		elseif input.KeyCode == Enum.KeyCode.Z and RequestToggleFastFly.invoke({Status = true}) then
+		elseif input.KeyCode == Enum.KeyCode.LeftShift and RequestToggleFastFly.invoke({Status = true}) then
 			self.boostHeld = true
 		end
 	end)
@@ -245,7 +245,7 @@ function FlyController:Init()
 			self.upHeld = false
 		elseif input.KeyCode == Enum.KeyCode.G then
 			self.downHeld = false
-		elseif input.KeyCode == Enum.KeyCode.Z and RequestToggleFastFly.invoke({Status = false}) then
+		elseif input.KeyCode == Enum.KeyCode.LeftShift and RequestToggleFastFly.invoke({Status = false}) then
 			self.boostHeld = false
 		end
 	end)
