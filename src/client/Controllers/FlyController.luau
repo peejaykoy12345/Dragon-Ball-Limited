@@ -21,7 +21,17 @@ local CONFIG = {
 	BOOST_MULTIPLIER = 2,
 	ALIGN_RESPONSIVENESS = 30,
 	HOLD_DURATION = 0.5,
+	GROUND_CHECK_DISTANCE = 5,
 }
+
+function FlyController:_IsNearGround(hrp: BasePart): boolean
+	local raycastParams = RaycastParams.new()
+	raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+	raycastParams.FilterDescendantsInstances = {self.plr.Character}
+
+	local result = workspace:Raycast(hrp.Position, Vector3.new(0, -CONFIG.GROUND_CHECK_DISTANCE, 0), raycastParams)
+	return result ~= nil
+end
 
 function FlyController:_GetCameraInputScalars(): (number, number)
 	local moveVector = self.controls:GetMoveVector()
@@ -225,14 +235,14 @@ function FlyController:Init()
 
 		if input.KeyCode == Enum.KeyCode.Space then
 			if self.isFlying then
-				self:_StopFly()
+				self.upHeld = true
 			else
 				self.spaceHeldStart = tick()
 			end
-		elseif input.KeyCode == Enum.KeyCode.F then
-			self.upHeld = true
-		elseif input.KeyCode == Enum.KeyCode.G then
-			self.downHeld = true
+		elseif input.KeyCode == Enum.KeyCode.LeftControl then
+			if self.isFlying then
+				self.downHeld = true
+			end
 		elseif input.KeyCode == Enum.KeyCode.LeftShift and RequestToggleFastFly.invoke({Status = true}) then
 			self.boostHeld = true
 		end
@@ -241,9 +251,8 @@ function FlyController:Init()
 	UserInputService.InputEnded:Connect(function(input)
 		if input.KeyCode == Enum.KeyCode.Space then
 			self.spaceHeldStart = nil
-		elseif input.KeyCode == Enum.KeyCode.F then
 			self.upHeld = false
-		elseif input.KeyCode == Enum.KeyCode.G then
+		elseif input.KeyCode == Enum.KeyCode.LeftControl then
 			self.downHeld = false
 		elseif input.KeyCode == Enum.KeyCode.LeftShift and RequestToggleFastFly.invoke({Status = false}) then
 			self.boostHeld = false
@@ -264,6 +273,11 @@ function FlyController:Init()
 		local char = self.plr.Character
 		local hrp = char and char:FindFirstChild("HumanoidRootPart")
 		if not hrp then return end
+
+		if self.downHeld and self:_IsNearGround(hrp) then
+			self:_StopFly()
+			return
+		end
 
 		local forwardScalar, rightScalar = self:_GetCameraInputScalars()
 		local isShiftlocked = UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
