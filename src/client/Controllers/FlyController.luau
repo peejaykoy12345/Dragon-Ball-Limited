@@ -11,7 +11,8 @@ local GeneralUtilities = Modules.Utilities.General
 local StateManager = require(GeneralUtilities.StateManager)
 local AnimationPlayer = require(Modules.Utilities.Media.Animation)
 
-local Network = require(Modules.Network)
+local Network = require(ReplicatedStorage.Modules.Network)
+local RequestToggleFastFly = Network.Fly.queries.RequestToggleFastFly
 
 local FlyController = {}
 
@@ -231,7 +232,7 @@ function FlyController:Init()
 			self.upHeld = true
 		elseif input.KeyCode == Enum.KeyCode.G then
 			self.downHeld = true
-		elseif input.KeyCode == Enum.KeyCode.Z then
+		elseif input.KeyCode == Enum.KeyCode.Z and RequestToggleFastFly.invoke({Status = true}) then
 			self.boostHeld = true
 		end
 	end)
@@ -243,7 +244,7 @@ function FlyController:Init()
 			self.upHeld = false
 		elseif input.KeyCode == Enum.KeyCode.G then
 			self.downHeld = false
-		elseif input.KeyCode == Enum.KeyCode.Z then
+		elseif input.KeyCode == Enum.KeyCode.Z and RequestToggleFastFly.invoke({Status = false}) then
 			self.boostHeld = false
 		end
 	end)

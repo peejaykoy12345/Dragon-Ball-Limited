@@ -13,6 +13,21 @@ return {
 			queries = {},
 		}
 	end),
+	Fly = ByteNetMax.defineNamespace("Fly", function()
+		return {
+			packets = {
+
+			},
+			queries = {
+				RequestToggleFastFly = ByteNetMax.defineQuery({
+					request = ByteNetMax.struct({
+						Status = ByteNetMax.bool,	
+					}),
+					response = ByteNetMax.bool,
+				})
+			},
+		}
+	end),
 	Replication = ByteNetMax.defineNamespace("Replication", function()
 		return {
 			packets = {
