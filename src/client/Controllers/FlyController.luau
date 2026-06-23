@@ -196,6 +196,9 @@ function FlyController:_StopFly()
 	if char then
 		char:SetAttribute("Flying", false)
 	end
+
+	RequestToggleFastFly.invoke({Status = false})
+	self.boostHeld = false
 end
 
 function FlyController:Init()
@@ -243,7 +246,7 @@ function FlyController:Init()
 			if self.isFlying then
 				self.downHeld = true
 			end
-		elseif input.KeyCode == Enum.KeyCode.LeftShift and RequestToggleFastFly.invoke({Status = true}) then
+		elseif input.KeyCode == Enum.KeyCode.LeftShift and self.isFlying and RequestToggleFastFly.invoke({Status = true}) then
 			self.boostHeld = true
 		end
 	end)

@@ -16,6 +16,10 @@ local CONFIG = {
 	CAMERA_HEIGHT = 3,
 	CAMERA_LATERAL_OFFSET = 8,
 	CAMERA_SIDE = "Right",
+	MIDPOINT_BIAS = 0.65,
+	MIN_ZOOM_DISTANCE = 8,
+	MAX_ZOOM_DISTANCE = 22,
+	ZOOM_LERP_SPEED = 6,
 }
 
 function LockOnController:_VisualizeRay(origin: Vector3, direction: Vector3)
@@ -98,7 +102,7 @@ function LockOnController:_DestroyGroundAlign()
 	end
 end
 
-function LockOnController:_UpdateGroundFacing()
+function LockOnController:_SnapGroundFacingToTarget()
 	if not self.target or not self.groundAlignOrientation then return end
 
 	local char = self.plr.Character
@@ -113,7 +117,11 @@ function LockOnController:_UpdateGroundFacing()
 	self.groundAlignOrientation.CFrame = CFrame.new(Vector3.zero, flatDirection)
 end
 
-function LockOnController:_UpdateLockOnCamera()
+function LockOnController:_GetMidpoint(playerPos: Vector3, targetPos: Vector3): Vector3
+	return playerPos:Lerp(targetPos, 1 - CONFIG.MIDPOINT_BIAS)
+end
+
+function LockOnController:_UpdateLockOnCamera(deltaTime: number)
 	if not self.target then return end
 
 	local camera = workspace.CurrentCamera
@@ -125,20 +133,30 @@ function LockOnController:_UpdateLockOnCamera()
 	local playerPos = hrp.Position
 	local targetPos = targetHrp.Position + Vector3.new(0, CONFIG.TARGET_HEIGHT_OFFSET, 0)
 
+	local midpoint = self:_GetMidpoint(playerPos, targetPos)
+
 	local toTarget = targetPos - playerPos
 	local flatToTarget = Vector3.new(toTarget.X, 0, toTarget.Z)
 	if flatToTarget.Magnitude < 0.05 then return end
 	flatToTarget = flatToTarget.Unit
 
-	local behindOffset = -flatToTarget * CONFIG.CAMERA_DISTANCE
+	local rawDistance = toTarget.Magnitude
+	local desiredZoom = math.clamp(
+		CONFIG.CAMERA_DISTANCE + rawDistance * 0.15,
+		CONFIG.MIN_ZOOM_DISTANCE,
+		CONFIG.MAX_ZOOM_DISTANCE
+	)
+	self._currentZoomDistance = self._currentZoomDistance or CONFIG.CAMERA_DISTANCE
+	self._currentZoomDistance += (desiredZoom - self._currentZoomDistance) * math.min(1, CONFIG.ZOOM_LERP_SPEED * deltaTime)
+
+	local behindOffset = -flatToTarget * self._currentZoomDistance
 	local rightDir = Vector3.yAxis:Cross(flatToTarget).Unit
 	local sideMultiplier = if CONFIG.CAMERA_SIDE == "Left" then 1 else -1
 	local lateralOffset = rightDir * CONFIG.CAMERA_LATERAL_OFFSET * sideMultiplier
 
 	local cameraPos = playerPos + behindOffset + lateralOffset + Vector3.new(0, CONFIG.CAMERA_HEIGHT, 0)
-	local lookDirection = toTarget.Unit
 
-	camera.CFrame = CFrame.new(cameraPos, cameraPos + lookDirection)
+	camera.CFrame = CFrame.lookAt(cameraPos, midpoint)
 end
 
 function LockOnController:_LockZoom()
@@ -169,6 +187,7 @@ function LockOnController:_LockOnTo(target: Model)
 
 	self.lockOnUI = ui
 	self.target = target
+	self._currentZoomDistance = CONFIG.CAMERA_DISTANCE
 
 	local char = self.plr.Character
 	char:SetAttribute("LockOn", true)
@@ -182,8 +201,8 @@ function LockOnController:_LockOnTo(target: Model)
 	UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
 	self:_LockZoom()
 
-	RunService:BindToRenderStep("LockOnCamera", Enum.RenderPriority.Camera.Value + 1, function()
-		self:_UpdateLockOnCamera()
+	RunService:BindToRenderStep("LockOnCamera", Enum.RenderPriority.Camera.Value + 1, function(deltaTime)
+		self:_UpdateLockOnCamera(deltaTime)
 	end)
 
 	if not char:GetAttribute("Flying") then
@@ -204,8 +223,8 @@ function LockOnController:_LockOnTo(target: Model)
 		end
 	end)
 
-	self.groundFacingConn = RunService.Heartbeat:Connect(function()
-		self:_UpdateGroundFacing()
+	self.actionFacingConn = char:GetAttributeChangedSignal("ActionFacingRequest"):Connect(function()
+		self:_SnapGroundFacingToTarget()
 	end)
 
 	local humanoid = target:FindFirstChildWhichIsA("Humanoid")
@@ -217,9 +236,9 @@ end
 function LockOnController:_Unlock()
 	RunService:UnbindFromRenderStep("LockOnCamera")
 
-	if self.groundFacingConn then
-		self.groundFacingConn:Disconnect()
-		self.groundFacingConn = nil
+	if self.actionFacingConn then
+		self.actionFacingConn:Disconnect()
+		self.actionFacingConn = nil
 	end
 
 	if self.flyingChangedConn then
@@ -262,11 +281,12 @@ function LockOnController:Init()
 	self.targetDiedConn = nil
 	self.groundAttachment = nil
 	self.groundAlignOrientation = nil
-	self.groundFacingConn = nil
+	self.actionFacingConn = nil
 	self.flyingChangedConn = nil
 	self.targetValueInstance = nil
 	self.savedMinZoom = nil
 	self.savedMaxZoom = nil
+	self._currentZoomDistance = nil
 
 	local function onCharacterAdded(char)
 		self:_Unlock()
