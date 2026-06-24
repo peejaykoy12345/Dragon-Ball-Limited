@@ -286,17 +286,24 @@ function FlyController:Init()
 		local isShiftlocked = UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
 		local speed = if self.boostHeld then CONFIG.FLY_SPEED * CONFIG.BOOST_MULTIPLIER else CONFIG.FLY_SPEED
 
+		local velocity = Vector3.zero
+
+		if forwardScalar ~= 0 or rightScalar ~= 0 then
+			velocity = self:_GetCameraRelativeDirection(forwardScalar, rightScalar) * speed
+		end
+
 		if self.upHeld or self.downHeld then
 			local vertical = 0
 			if self.upHeld then vertical += 1 end
 			if self.downHeld then vertical -= 1 end
-			self.linearVelocity.VectorVelocity = Vector3.new(0, vertical * speed, 0)
-		elseif forwardScalar == 0 and rightScalar == 0 then
-			self.linearVelocity.VectorVelocity = Vector3.zero
-		else
-			local direction = self:_GetCameraRelativeDirection(forwardScalar, rightScalar)
-			self.linearVelocity.VectorVelocity = direction * speed
+			velocity = velocity + workspace.CurrentCamera.CFrame.UpVector * vertical * speed
 		end
+
+		if velocity.Magnitude > speed then
+			velocity = velocity.Unit * speed
+		end
+
+		self.linearVelocity.VectorVelocity = velocity
 
 		local lockOnTarget = self:_GetLockOnTarget(char)
 		local lockOnTargetHrp = lockOnTarget and lockOnTarget:FindFirstChild("HumanoidRootPart")
