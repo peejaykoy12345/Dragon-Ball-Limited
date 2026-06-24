@@ -13,6 +13,23 @@ return {
 			queries = {},
 		}
 	end),
+	Input = ByteNetMax.defineNamespace("Input", function()
+		return {
+			packets = {
+				InputStarted = ByteNetMax.definePacket({
+					value = ByteNetMax.struct({
+						Input = ByteNetMax.string,
+					})
+				}),
+				InputEnded = ByteNetMax.definePacket({
+					value = ByteNetMax.struct({
+						Input = ByteNetMax.string,
+					})
+				}),
+			},
+			queries = {},
+		}
+	end),
 	Fly = ByteNetMax.defineNamespace("Fly", function()
 		return {
 			packets = {
