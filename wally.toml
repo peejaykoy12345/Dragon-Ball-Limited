@@ -5,4 +5,5 @@ registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 
 [dependencies]
+WCS = "cheetiedotpy/wcs@2.4.0"
 ForgeVFX = "zilibobi/forge-vfx@^2.4.0"

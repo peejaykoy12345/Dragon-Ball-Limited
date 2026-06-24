@@ -3,9 +3,14 @@
 registry = "test"
 
 [[package]]
+name = "cheetiedotpy/wcs"
+version = "2.5.0"
+dependencies = []
+
+[[package]]
 name = "jhoray/dragon-ball-limited"
 version = "0.1.0"
-dependencies = [["ForgeVFX", "zilibobi/forge-vfx@2.4.0"]]
+dependencies = [["ForgeVFX", "zilibobi/forge-vfx@2.4.0"], ["WCS", "cheetiedotpy/wcs@2.5.0"]]
 
 [[package]]
 name = "zilibobi/forge-vfx"
