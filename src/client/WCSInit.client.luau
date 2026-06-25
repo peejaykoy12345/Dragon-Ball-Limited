@@ -1,7 +1,13 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local WCS = require(ReplicatedStorage.Modules.Packages.WCS)
+local Modules = ReplicatedStorage.Modules
+
+local WCSFolder = Modules.WCS
+
+local WCS = require(Modules.Packages.WCS)
 
 local Client = WCS.CreateClient()
+
+Client:RegisterDirectory(WCSFolder.StatusEffects)
 
 Client:Start()
