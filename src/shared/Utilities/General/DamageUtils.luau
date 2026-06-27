@@ -1,5 +1,4 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerScriptService = game:GetService("ServerScriptService")
 
 local StateManager = require(ReplicatedStorage.Modules.Utilities.General.StateManager)
 
@@ -13,17 +12,6 @@ function Utils:ValidateAndDamage(attacker: Model, target: Model, damage: number)
 	if Multipliers[attacker] then
 		damage = Multipliers[attacker](damage)
 	end
-
-	local NPCService = require(ServerScriptService.Services.NPCService)
-	NPCService:FireDamageCallback(target, attacker, damage)
-
-	local GripService = require(ServerScriptService.Services.GripService)
-	if StateManager.HasState(target, "Gripping") then
-		GripService:FireGripCancel(target)
-	end
-
-	local StatsService = require(ServerScriptService.Services.StatService)
-	StatsService:UpdateCharacterStat(target, "Cursed Energy", "Add", damage)
 
 	local humanoid = target:FindFirstChild("Humanoid") :: Humanoid
 	humanoid:TakeDamage(damage)

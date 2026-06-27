@@ -9,6 +9,8 @@ local WCS = require(Modules.Packages.WCS)
 
 local M1_BASE = require(ReplicatedStorage.Modules.Templates.Combat.M1)
 
+local Config = require(script.Parent.Config)
+
 local M1 = setmetatable({}, M1_BASE)
 M1.Anims = SaiyanM1Anims:GetChildren()
 
@@ -18,8 +20,10 @@ function Skill:CanStart(char: Model)
     return M1:CanStart(char)
 end
 
-function Skill:OnStartServer(info, buffered)
+function Skill:OnStartServer(_, buffered)
     self._active = true
+
+    local info = Config.M1
 
     task.spawn(function()
         while self._active do

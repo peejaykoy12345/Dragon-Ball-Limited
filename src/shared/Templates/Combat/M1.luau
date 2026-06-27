@@ -11,6 +11,7 @@ local TableUtils = require(ReplicatedStorage.Modules.Utilities.General.TableUtil
 local Velocity = require(ReplicatedStorage.Modules.Utilities.General.Velocity)
 local MoveUtils = require(GeneralUtils.MoveUtils)
 local DamageUtils = require(GeneralUtils.DamageUtils)
+local Cooldown = require(GeneralUtils.Cooldown)
 
 local ClientFX = require(Modules.Utilities.Media.ClientFX)
 
@@ -190,10 +191,17 @@ function M1:M1(WCS_Character, info)
     self:PlaySFX(char, m1Count, "Miss")
     self:ShowSwingVFX(char, m1Count)
 
+    local lastM1 = m1Count >= #self.Anims
+
+    if lastM1 then
+        Cooldown:SetCooldown(char, script.Name, info.Cooldown)
+        print(info.Cooldown)
+    end
+
     local hitbox
 
     local markers = {
-        Hit = function()
+        HitStart = function()
             local hbInfo = {
                 HitboxWeldOffsetCFrame = info.HitboxWeldOffsetCFrame,
                 hitboxSize = info.ComboTimings[m1Count].HitboxSize,
@@ -208,14 +216,14 @@ function M1:M1(WCS_Character, info)
                     Duration = 2,
                 })
 
-                if m1Count >= #self.Anims then
+                if lastM1 then
                     self:OnLastM1Hit(char, hitChar)
                 else
                     --MoveUtils:PlayHitReactionAnimation(hitChar)
                 end
             end)
         end,
-        EndHit = function()
+        HitEnd = function()
             if hitbox then
                 hitbox:Destroy()
             end
