@@ -8,6 +8,7 @@ local WCS = require(Modules.Packages.WCS)
 
 local Server = WCS.CreateServer()
 
+Server:RegisterDirectory(WCSFolder.Skills)
 Server:RegisterDirectory(WCSFolder.StatusEffects)
 
 Server:Start()

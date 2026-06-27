@@ -1,13 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
-local Assets = ReplicatedStorage.Assets
-local SharedAnimations = Assets.Animations.Shared
-local HitReactions = SharedAnimations.HitReactions
-
-local Values = ReplicatedStorage.Values
-local GameStarted = Values.GameStarted
-
 local Modules = ReplicatedStorage.Modules
 local GeneralUtils = Modules.Utilities.General
 local StateManager = require(GeneralUtils.StateManager)
@@ -90,8 +83,6 @@ export type CanPerformActionParams = {
 }
 
 function MoveUtils:CanPerformAction(char: Model, actionName: string, raw_params: CanPerformActionParams?): boolean
-	if not GameStarted.Value then return false end
-
 	local params = raw_params or {} 
 
 	if StateManager.isActionBlocked(char, params.statesToSkip ) then
@@ -414,7 +405,7 @@ function MoveUtils:RepositionCharacters(attacker: Model, target: Model, rawConfi
 	attackerHrp.CFrame = attackerCF
 end
 
-function MoveUtils:PlayHitReactionAnimation(hitChar: Model)
+--[[function MoveUtils:PlayHitReactionAnimation(hitChar: Model)
 	local humanoid = hitChar:FindFirstChildOfClass("Humanoid")
 	if not humanoid then return end
 
@@ -438,6 +429,6 @@ function MoveUtils:PlayHitReactionAnimation(hitChar: Model)
 
 	local track = animator:LoadAnimation(animationInstance)
 	track:Play()
-end
+end]]
 
 return MoveUtils
