@@ -1,3 +1,4 @@
+local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
@@ -403,6 +404,20 @@ function MoveUtils:RepositionCharacters(attacker: Model, target: Model, rawConfi
 
 	targetHrp.CFrame = targetCF
 	attackerHrp.CFrame = attackerCF
+end
+
+function MoveUtils:FacePlayer(enemyRoot: BasePart, attackerRoot: BasePart)
+    if not enemyRoot or not attackerRoot then return end
+
+    local BodyGyro = Instance.new("BodyGyro")
+    BodyGyro.MaxTorque = Vector3.new(0, 40000, 0)
+    BodyGyro.P = 10000
+    BodyGyro.CFrame = CFrame.lookAt(enemyRoot.Position, attackerRoot.Position * Vector3.new(1, 0, 1) + enemyRoot.Position * Vector3.new(0, 1, 0))
+    BodyGyro.Parent = enemyRoot
+    
+    task.delay(0.35, function()
+        BodyGyro:Destroy()
+    end)
 end
 
 --[[function MoveUtils:PlayHitReactionAnimation(hitChar: Model)

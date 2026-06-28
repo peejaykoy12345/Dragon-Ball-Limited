@@ -214,8 +214,13 @@ function M1:M1(WCS_Character, info)
             }
 
             hitbox = self:CreateHitbox(char, session, hbInfo, function(hitChar)
+                local ehrp = hitChar:FindFirstChild("HumanoidRootPart")
+                if not ehrp then return end
+                
                 self:PlaySFX(hitChar, m1Count, "Hit")
                 DamageUtils:ValidateAndDamage(char, hitChar, info.ComboTimings[m1Count].Damage)
+
+                MoveUtils:FacePlayer(ehrp, hrp)
 
                 MoveUtils:ApplyStun({
                     Target = hitChar,
