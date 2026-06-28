@@ -1,6 +1,6 @@
 return {
     M1 = {
-        Cooldown = 5,
+        Cooldown = 1.5,
         RagdollDuration = 2,
         HitboxWeldOffsetCFrame = CFrame.new(0, 0, -3),
         ComboTimings = {

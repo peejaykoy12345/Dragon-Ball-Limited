@@ -165,8 +165,21 @@ function M1:ApplyKnockback(char: Model, target: Model)
     Debris:AddItem(bv, 0.2)
 end
 
-function M1:PlayHitReacion()
-    
+function M1:ApplyVelocity(char: Model, enemy: Model)
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local ehrp = enemy:FindFirstChild("HumanoidRootPart")
+    if not hrp or not ehrp then return end
+
+    local Mass1, Mass2 = MoveUtils:GetModelMass(char), MoveUtils:GetModelMass(enemy)
+
+    local function createBv(parent, vel, mass)
+        local bv = Velocity.CreateBV(parent, Vector3.new(mass + 30000, 0, mass + 30000))
+        bv.Velocity = vel
+        Debris:AddItem(bv, .075)
+    end
+
+    createBv(hrp, hrp.CFrame.LookVector * 14, Mass1)
+    createBv(ehrp, hrp.CFrame.LookVector * 14, Mass2)
 end
 
 function M1:M1(WCS_Character, info)
@@ -222,6 +235,8 @@ function M1:M1(WCS_Character, info)
 
                 MoveUtils:FacePlayer(ehrp, hrp)
 
+                self:ApplyVelocity(char, hitChar)
+
                 MoveUtils:ApplyStun({
                     Target = hitChar,
                     Duration = 2,
@@ -237,10 +252,12 @@ function M1:M1(WCS_Character, info)
             if hitbox then
                 hitbox:Destroy()
             end
+
+            session:Stop()
         end,
         Stop = function()
             session:Stop()
-        end
+        end,
     }
     session:BulkAddConnections(MoveUtils:ConnectAnimationMarkers(track, markers))
 
