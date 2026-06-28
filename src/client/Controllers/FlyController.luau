@@ -22,6 +22,12 @@ local CONFIG = {
 	ALIGN_RESPONSIVENESS = 30,
 	HOLD_DURATION = 0.5,
 	GROUND_CHECK_DISTANCE = 5,
+	BASE_WALK_SPEED = 16,
+}
+
+local BLOCKED_SKIP = {
+	["M1CantUse"] = true,
+	["FastFlight"] = true,
 }
 
 function FlyController:_IsNearGround(hrp: BasePart): boolean
@@ -169,6 +175,10 @@ function FlyController:_GetAnimationName(forwardScalar: number, rightScalar: num
 	return "Idle"
 end
 
+function FlyController:_GetSpeedScale(hum: Humanoid): number
+	return hum.WalkSpeed / CONFIG.BASE_WALK_SPEED
+end
+
 function FlyController:_StartFly()
 	local char = self.plr.Character
 	if not char then return end
@@ -177,7 +187,7 @@ function FlyController:_StartFly()
 	local hum = char:FindFirstChildWhichIsA("Humanoid")
 	if not hrp or not hum then return end
 
-	if StateManager.isActionBlocked(char) then return end
+	if StateManager.isActionBlocked(char, BLOCKED_SKIP) then return end
 
 	self.isFlying = true
 	self:_CreateFlyConstraints(hrp)
@@ -275,16 +285,32 @@ function FlyController:Init()
 
 		local char = self.plr.Character
 		local hrp = char and char:FindFirstChild("HumanoidRootPart")
-		if not hrp then return end
+		local hum = char and char:FindFirstChildWhichIsA("Humanoid")
+		if not hrp or not hum then return end
+
+		if StateManager.isActionBlocked(char, BLOCKED_SKIP) then
+			self.linearVelocity.VectorVelocity = Vector3.zero
+
+			local forceFacing = char:GetAttribute("ForceFacingPosition")
+			if forceFacing and self.alignOrientation then
+				local toTarget = forceFacing - hrp.Position
+				if toTarget.Magnitude > 0.05 then
+					self.alignOrientation.CFrame = CFrame.new(Vector3.zero, toTarget.Unit)
+				end
+			end
+
+			return
+		end
 
 		if self.downHeld and self:_IsNearGround(hrp) then
 			self:_StopFly()
 			return
 		end
 
+		local speedScale = self:_GetSpeedScale(hum)
 		local forwardScalar, rightScalar = self:_GetCameraInputScalars()
 		local isShiftlocked = UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
-		local speed = if self.boostHeld then CONFIG.FLY_SPEED * CONFIG.BOOST_MULTIPLIER else CONFIG.FLY_SPEED
+		local speed = if self.boostHeld then CONFIG.FLY_SPEED * CONFIG.BOOST_MULTIPLIER * speedScale else CONFIG.FLY_SPEED * speedScale
 
 		local velocity = Vector3.zero
 
@@ -308,7 +334,15 @@ function FlyController:Init()
 		local lockOnTarget = self:_GetLockOnTarget(char)
 		local lockOnTargetHrp = lockOnTarget and lockOnTarget:FindFirstChild("HumanoidRootPart")
 
-		if lockOnTargetHrp then
+		local forceFacing = char:GetAttribute("ForceFacingPosition")
+		if forceFacing then
+			if self.alignOrientation then
+				local toTarget = forceFacing - hrp.Position
+				if toTarget.Magnitude > 0.05 then
+					self.alignOrientation.CFrame = CFrame.new(Vector3.zero, toTarget.Unit)
+				end
+			end
+		elseif lockOnTargetHrp then
 			self:_UpdateLockOnFacing(hrp, lockOnTargetHrp)
 		elseif isShiftlocked then
 			self:_UpdateShiftlockFacing()

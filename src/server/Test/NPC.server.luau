@@ -4,3 +4,4 @@ local WCS = require(ReplicatedStorage.Modules.Packages.WCS)
 
 task.wait(2)
 WCS.Character.new(workspace.LivingBeings.Rig)
+WCS.Character.new(workspace.LivingBeings.FlyRig)

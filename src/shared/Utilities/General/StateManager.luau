@@ -180,6 +180,8 @@ local RESTRICTED_ACTION_STATES = {
 	"Perfect Block",
 	"M1CantUse",
 	"Ragdoll",
+	"Knockback",
+	"FastFlight",
 }
 
 function StateManager.isActionBlocked(char: Model, statesToSkip: {string}?): boolean

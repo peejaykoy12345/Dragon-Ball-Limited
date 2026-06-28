@@ -5,10 +5,15 @@ local Assets = ReplicatedStorage.Assets
 local FlyVFX = Assets.VFX.General.Flight :: BasePart
 
 local Modules = ReplicatedStorage.Modules
+local StateManager = require(Modules.Utilities.General.StateManager)
 local ClientFX = require(Modules.Utilities.Media.ClientFX)
 
 local Network = require(Modules.Network)
 local RequestToggleFastFly = Network.Fly.queries.RequestToggleFastFly
+
+local BLOCKED_SKIP_FAST_FLIGHT = {
+    ["M1CantUse"] = true,
+}
 
 local FlyService = {}
 FlyService.PlayerVFXHandleIds = {}
@@ -28,6 +33,10 @@ function FlyService:Init()
         local status = data.Status
 
         if status then
+            if StateManager.isActionBlocked(char, BLOCKED_SKIP_FAST_FLIGHT) then return false end
+
+            StateManager.SetState(char, "FastFlight", true)
+
             local handleId = ClientFX:Construct(
                 {
                     Name = "ToggleParticles",
@@ -44,6 +53,8 @@ function FlyService:Init()
             ClientFX:Start(handleId, {position = hrp.Position})
             self.PlayerVFXHandleIds[plr] = handleId
         else
+            StateManager.RemoveState(char, "FastFlight")
+
             local handleId = self.PlayerVFXHandleIds[plr]
             if handleId then
                 ClientFX:Destroy(handleId)

@@ -7,6 +7,7 @@ local KnockbackAnimations = Assets.Animations.Default.HitReactions.Knockback
 local Modules = ReplicatedStorage.Modules
 local WCS = require(Modules.Packages.WCS)
 
+local StateManager = require(ReplicatedStorage.Modules.Utilities.General.StateManager)
 local Animation = require(ReplicatedStorage.Modules.Utilities.Media.Animation)
 
 local AutoRotateEffect = require(ReplicatedStorage.Modules.WCS.StatusEffects.AutoRotate)
@@ -107,10 +108,14 @@ function Velocity:ApplyKnockback(attacker: Model, target: Model, knockback: numb
 		anim = Animation:Play(target, KnockbackAnimations.Loop, {Priority = 1})
 	end)
 
+	StateManager.SetState(target, "Knockback", true)
+
 	task.delay(duration, function()
 		if anim then
 			anim:Stop()
 		end
+
+		StateManager.RemoveState(target, "Knockback")
 
 		Animation:Play(target, KnockbackAnimations.End, {Priority = 1})
 		

@@ -407,17 +407,26 @@ function MoveUtils:RepositionCharacters(attacker: Model, target: Model, rawConfi
 end
 
 function MoveUtils:FacePlayer(enemyRoot: BasePart, attackerRoot: BasePart)
-    if not enemyRoot or not attackerRoot then return end
+	if not enemyRoot or not attackerRoot then return end
 
-    local BodyGyro = Instance.new("BodyGyro")
-    BodyGyro.MaxTorque = Vector3.new(0, 40000, 0)
-    BodyGyro.P = 10000
-    BodyGyro.CFrame = CFrame.lookAt(enemyRoot.Position, attackerRoot.Position * Vector3.new(1, 0, 1) + enemyRoot.Position * Vector3.new(0, 1, 0))
-    BodyGyro.Parent = enemyRoot
-    
-    task.delay(0.35, function()
-        BodyGyro:Destroy()
-    end)
+	local char = enemyRoot.Parent
+
+	if char then
+		char:SetAttribute("ForceFacingPosition", attackerRoot.Position)
+	end
+
+	local BodyGyro = Instance.new("BodyGyro")
+	BodyGyro.MaxTorque = Vector3.new(0, 40000, 0)
+	BodyGyro.P = 10000
+	BodyGyro.CFrame = CFrame.lookAt(enemyRoot.Position, attackerRoot.Position * Vector3.new(1, 0, 1) + enemyRoot.Position * Vector3.new(0, 1, 0))
+	BodyGyro.Parent = enemyRoot
+
+	task.delay(0.35, function()
+		BodyGyro:Destroy()
+		if char then
+			char:SetAttribute("ForceFacingPosition", nil)
+		end
+	end)
 end
 
 --[[function MoveUtils:PlayHitReactionAnimation(hitChar: Model)

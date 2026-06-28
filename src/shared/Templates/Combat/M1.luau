@@ -84,7 +84,7 @@ function M1:PlaySFX(parent: Instance, m1Count: number, sfxType: "Hit" | "Miss")
 end
 
 function M1:CanStart(char: Model)
-    return MoveUtils:CanPerformAction(char, script.Name, {statesToSkip = {M1CantUse = true}})
+    return MoveUtils:CanPerformAction(char, script.Name)
 end
 
 function M1:CreateHitbox(char: Model, session, moveInfo, onTouched)
@@ -122,7 +122,7 @@ function M1:CreateSession(char: Model)
         actionName = script.Name,
         actionType = "Default",
         states = {
-            attackerStates = {"CantUse"},
+            attackerStates = {"M1CantUse"},
         },
         skipBuffer = true,
     })
