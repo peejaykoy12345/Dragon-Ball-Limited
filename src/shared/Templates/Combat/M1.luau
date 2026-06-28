@@ -4,6 +4,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Assets = ReplicatedStorage.Assets
 local HitReactions = Assets.Animations.Default.HitReactions
 
+local M1VFX = Assets.VFX.General.Hit
+
 local Modules = ReplicatedStorage.Modules
 local GeneralUtils = Modules.Utilities.General
 local ActionSession = require(ReplicatedStorage.Modules.Utilities.General.ActionSession)
@@ -29,7 +31,8 @@ M1.MissSFX = {
     
 }
 M1.VFX = {
-    
+    HIT = M1VFX.M1,
+    KNOCKBACK = M1VFX.Knockback,
 }
 M1.SwingVFX = {
     
@@ -173,6 +176,39 @@ function M1:ApplyVelocity(char: Model, enemy: Model)
     createBv(ehrp, hrp.CFrame.LookVector * 14, Mass2)
 end
 
+function M1:PlayHitVFX(hitChar: Model, finalHit: boolean)
+    local ehrp = hitChar:FindFirstChild("HumanoidRootPart")
+    if not ehrp then return end
+
+    if finalHit then
+        ClientFX:RenderToClient(
+            {
+                Name = "EmitParticles",
+                Type = "General"
+            },
+            {
+                parent = ehrp,
+                vfx = self.VFX.KNOCKBACK,
+                vfxCFrame = ehrp.CFrame * CFrame.Angles(0, -math.rad(90), 0),
+                position = ehrp.Position,
+            }
+        )
+    else
+        ClientFX:RenderToClient(
+            {
+                Name = "EmitParticles",
+                Type = "General"
+            },
+            {
+                parent = ehrp,
+                vfx = self.VFX.HIT,
+                shouldWeld = true,
+                position = ehrp.Position,
+            }
+        )
+    end
+end
+
 function M1:M1(WCS_Character, info)
     local char, hrp = MoveUtils:GetPlayerContext(WCS_Character.Player)
     if not char or not hrp then return end
@@ -226,12 +262,15 @@ function M1:M1(WCS_Character, info)
 
                 MoveUtils:FacePlayer(ehrp, hrp)
 
+                self:PlayHitVFX(hitChar, false)
+
                 MoveUtils:ApplyStun({
                     Target = hitChar,
                     Duration = 2,
                 })
                 if lastM1 then
                     self:OnLastM1Hit(char, hitChar, info)
+                    self:PlayHitVFX(hitChar, true)
                 else
                     self:ApplyVelocity(char, hitChar)
                     Animation:Play(hitChar, self.HitReaction[m1Count], {Priority = 1})

@@ -57,4 +57,4 @@ end
 local elapsed = os.clock() - startTime
 
 rig:Destroy()
-print(string.format("[Client] Preloading done! Warmed up %d animations in %.2fs", animCount, elapsed))
+print(string.format("[Server] Preloading done! Warmed up %d animations in %.2fs", animCount, elapsed))
