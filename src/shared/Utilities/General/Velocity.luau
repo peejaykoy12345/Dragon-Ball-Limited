@@ -1,8 +1,13 @@
 local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local Assets = ReplicatedStorage.Assets
+local KnockbackAnimations = Assets.Animations.Default.HitReactions.Knockback
+
 local Modules = ReplicatedStorage.Modules
 local WCS = require(Modules.Packages.WCS)
+
+local Animation = require(ReplicatedStorage.Modules.Utilities.Media.Animation)
 
 local AutoRotateEffect = require(ReplicatedStorage.Modules.WCS.StatusEffects.AutoRotate)
 
@@ -95,15 +100,22 @@ function Velocity:ApplyKnockback(attacker: Model, target: Model, knockback: numb
 	local newCFrame = CFrame.new(targetPosition, targetPosition + Vector3.new(lookDirection.X, 0, lookDirection.Z))
 	ehrp.CFrame = newCFrame
 
-	local bodyVelocity = Instance.new("BodyVelocity")
-	bodyVelocity.MaxForce = Vector3.new(math.huge, 0, math.huge)
-	bodyVelocity.Velocity = direction * knockback
-	bodyVelocity.P = 1250
-	bodyVelocity.Parent = ehrp
+	local linearVelocity = Velocity.CreateLV(ehrp, {Velocity = direction * knockback})
+
+	local anim = Animation:Play(target, KnockbackAnimations.Start, {Priority = 1})
+	task.delay(anim.Length, function()
+		anim = Animation:Play(target, KnockbackAnimations.Loop, {Priority = 1})
+	end)
 
 	task.delay(duration, function()
-		if bodyVelocity then
-			bodyVelocity:Destroy()
+		if anim then
+			anim:Stop()
+		end
+
+		Animation:Play(target, KnockbackAnimations.End, {Priority = 1})
+		
+		if linearVelocity then
+			linearVelocity:Destroy()
 		end
 	end)
 end

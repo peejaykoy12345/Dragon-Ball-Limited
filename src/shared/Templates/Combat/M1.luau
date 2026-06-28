@@ -148,21 +148,12 @@ function M1:HandleM1Count(char: Model, cooldown): number
     return m1Count
 end
 
-function M1:OnLastM1Hit(char: Model, target: Model)
-    MoveUtils:RagdollCharacter(target, self.RagdollDuration, true)
-    self:ApplyKnockback(char, target)
+function M1:OnLastM1Hit(char: Model, target: Model, info)
+    self:ApplyKnockback(char, target, info.KnockbackPower, info.KnockbackDuration)
 end
 
-function M1:ApplyKnockback(char: Model, target: Model)
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    local ehrp = target:FindFirstChild("HumanoidRootPart")
-    if not ehrp then return end
-
-    local bv = Velocity.CreateBV(ehrp, Vector3.new(math.huge, math.huge, math.huge))
-    bv.Velocity = (hrp.CFrame.LookVector * self.KnockVelocity.ZAxis) + (hrp.CFrame.UpVector * self.KnockVelocity.YAxis)
-    Debris:AddItem(bv, 0.2)
+function M1:ApplyKnockback(char: Model, target: Model, knockbackPower: number, knockbackDuration: number)
+    Velocity:ApplyKnockback(char, target, knockbackPower, knockbackDuration)
 end
 
 function M1:ApplyVelocity(char: Model, enemy: Model)
@@ -235,15 +226,14 @@ function M1:M1(WCS_Character, info)
 
                 MoveUtils:FacePlayer(ehrp, hrp)
 
-                self:ApplyVelocity(char, hitChar)
-
                 MoveUtils:ApplyStun({
                     Target = hitChar,
                     Duration = 2,
                 })
                 if lastM1 then
-                    self:OnLastM1Hit(char, hitChar)
+                    self:OnLastM1Hit(char, hitChar, info)
                 else
+                    self:ApplyVelocity(char, hitChar)
                     Animation:Play(hitChar, self.HitReaction[m1Count], {Priority = 1})
                 end
             end)
