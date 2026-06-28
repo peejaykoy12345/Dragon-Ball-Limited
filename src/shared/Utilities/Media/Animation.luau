@@ -110,7 +110,7 @@ function Animation:_LoadTrack(character: Model, AnimationInstanceOrId: number | 
 	local track = animator:LoadAnimation(animation)
 
 	if playOptionsParams and playOptionsParams.Priority then
-		track.Priority = Enum.AnimationPriority["Action" .. tostring(playOptionsParams.Priority)]
+		track.Priority = Enum.AnimationPriority[if playOptionsParams.Priority == 1  then  "Action" else "Action" .. tostring(playOptionsParams.Priority)]
 	end
 
 	characterCache[key] = track

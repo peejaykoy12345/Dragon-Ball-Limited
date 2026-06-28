@@ -1,8 +1,8 @@
 local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local _Assets = ReplicatedStorage.Assets
-
+local Assets = ReplicatedStorage.Assets
+local HitReactions = Assets.Animations.Default.HitReactions
 
 local Modules = ReplicatedStorage.Modules
 local GeneralUtils = Modules.Utilities.General
@@ -13,6 +13,7 @@ local MoveUtils = require(GeneralUtils.MoveUtils)
 local DamageUtils = require(GeneralUtils.DamageUtils)
 local Cooldown = require(GeneralUtils.Cooldown)
 
+local Animation = require(Modules.Utilities.Media.Animation)
 local ClientFX = require(Modules.Utilities.Media.ClientFX)
 
 local M1 = {}
@@ -20,6 +21,7 @@ M1.__index = M1
 M1.Anims = {
     
 }
+M1.HitReaction = HitReactions.Stun:GetChildren()
 M1.HitSFX = {
     
 }
@@ -125,13 +127,14 @@ function M1:CreateSession(char: Model)
     return session
 end
 
-function M1:HandleM1Count(char: Model): number
+function M1:HandleM1Count(char: Model, cooldown): number
     local Now_Clock = os.clock()
 	char:SetAttribute("LastM1", Now_Clock)
 
 	task.delay(1, function()
     if char and char:GetAttribute("LastM1") == Now_Clock then
             char:SetAttribute("Combo", 0) 
+            Cooldown:SetCooldown(char, script.Name, cooldown)
         end
     end)
 
@@ -162,6 +165,10 @@ function M1:ApplyKnockback(char: Model, target: Model)
     Debris:AddItem(bv, 0.2)
 end
 
+function M1:PlayHitReacion()
+    
+end
+
 function M1:M1(WCS_Character, info)
     local char, hrp = MoveUtils:GetPlayerContext(WCS_Character.Player)
     if not char or not hrp then return end
@@ -183,7 +190,7 @@ function M1:M1(WCS_Character, info)
         self.Finished:Fire()
     end
 
-    local m1Count = self:HandleM1Count(char)
+    local m1Count = self:HandleM1Count(char, info.Cooldown)
 
     local track = session:PlayAndAddAnimation(char, self.Anims[m1Count])
     local trackLength = MoveUtils:GetTrackLengthOrDefault(track, 0.3, 0.2)
@@ -195,7 +202,6 @@ function M1:M1(WCS_Character, info)
 
     if lastM1 then
         Cooldown:SetCooldown(char, script.Name, info.Cooldown)
-        print(info.Cooldown)
     end
 
     local hitbox
@@ -215,11 +221,10 @@ function M1:M1(WCS_Character, info)
                     Target = hitChar,
                     Duration = 2,
                 })
-
                 if lastM1 then
                     self:OnLastM1Hit(char, hitChar)
                 else
-                    --MoveUtils:PlayHitReactionAnimation(hitChar)
+                    Animation:Play(hitChar, self.HitReaction[m1Count], {Priority = 1})
                 end
             end)
         end,
