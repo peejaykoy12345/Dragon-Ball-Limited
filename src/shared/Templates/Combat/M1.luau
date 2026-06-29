@@ -37,15 +37,14 @@ M1.VFX = {
 M1.SwingVFX = {
     
 }
-M1.ValidateHitParams = {
-    BlockParams = {
-        Blockable = true,
-        PerfectBlockable = true,
-    }
-}
 M1.KnockVelocity = {
     ZAxis = 25,
     YAxis = 15,
+}
+M1.ValidateHitParams = {
+    BlockParams = {
+        Blockable = true,
+    }
 }
 M1.RagdollDuration = 1.5
 M1.Finished = Instance.new("BindableEvent")
@@ -104,7 +103,7 @@ function M1:CreateHitbox(char: Model, session, moveInfo, onTouched)
 
     hitbox.HitSomeone:Connect(function(hitChars)
         for _, hitChar in ipairs(hitChars) do
-            local params = TableUtils:CopyDictionary(self.ValidateHitParams)
+            local params = TableUtils:CopyDictionary(self.ValidateHitParams or {})
             params.session = session
             if not MoveUtils:ValidateHit(char, hitChar, params) then continue end
             session:InitTarget(hitChar)
@@ -210,7 +209,7 @@ function M1:PlayHitVFX(hitChar: Model, finalHit: boolean)
 end
 
 function M1:M1(WCS_Character, info)
-    local char, hrp = MoveUtils:GetPlayerContext(WCS_Character.Player)
+    local char, hrp = MoveUtils:GetWCSCharacterContext(WCS_Character)
     if not char or not hrp then return end
 
     if not self:CanStart(char) then return end
@@ -221,6 +220,10 @@ function M1:M1(WCS_Character, info)
     if self.lastTrack[char] then
         self.lastTrack[char]:Stop()
     end
+
+    self.ValidateHitParams = {
+        BlockParams = info.BlockParams
+    }
 
     session:Start()
     self.IsRunning = true 

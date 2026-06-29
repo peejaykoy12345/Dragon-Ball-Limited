@@ -3,13 +3,14 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local StateManager = require(ReplicatedStorage.Modules.Utilities.General.StateManager)
+local ActionSession = require(ReplicatedStorage.Modules.Utilities.General.ActionSession)
 local ClientFX = require(ReplicatedStorage.Modules.Utilities.Media.ClientFX)
 
 local CONFIG = {
     BLOCK_DURABILITY = 100,
 }
 
-local ActiveBlocks: {[Model]: {BlockHandleId: number, IdleTrack: AnimationTrack, Assets: BlockAssets}} = {}
+local ActiveBlocks: {[Model]: {BlockHandleId: number, Session: typeof(ActionSession.new({})), Assets: BlockAssets}} = {}
 
 type BlockAssets = {
     IdleAnim: Animation,
@@ -69,9 +70,19 @@ function Block:StartBlock(target: Model, assets: BlockAssets)
 
     StateManager.SetState(target, "Blocking", true)
 
-    local animator = humanoid:FindFirstChildWhichIsA("Animator")
-    local idleTrack = animator:LoadAnimation(assets.IdleAnim)
-    idleTrack:Play()
+    local session = ActionSession.new({
+        attacker = target,
+        actionName = "Block",
+        actionType = "Default",
+        states = {},
+    })
+
+    session:Start()
+    session:PlayAndAddAnimation(target, assets.IdleAnim)
+
+    session.extraStopFunction = function(forceStopped)
+        Block:StopBlock(target)
+    end
 
     local handleId = ClientFX:Construct(
         {
@@ -90,17 +101,18 @@ function Block:StartBlock(target: Model, assets: BlockAssets)
 
     ActiveBlocks[target] = {
         BlockHandleId = handleId,
-        IdleTrack = idleTrack,
+        Session = session,
         Assets = assets,
     }
-
-    -- play assets.BlockVFX here
-    
 end
 
 function Block:HitBlock(target: Model, damage: number)
     local blockData = ActiveBlocks[target]
     if not blockData then return end
+
+    if target:GetAttribute("BlockDurability") == nil then
+        Block:InitCharacter(target)
+    end
 
     local current = target:GetAttribute("BlockDurability") or 0
     local newDurability = current - damage
@@ -117,14 +129,14 @@ function Block:StopBlock(target: Model)
     local blockData = ActiveBlocks[target]
     if not blockData then return end
 
+    ActiveBlocks[target] = nil
+
     StateManager.RemoveState(target, "Blocking")
 
-    blockData.IdleTrack:Stop()
+    blockData.Session.extraStopFunction = nil
+    blockData.Session:Stop(true)
 
-    local handleId = ActiveBlocks[target].BlockHandleId
-    ClientFX:Destroy(handleId)
-
-    ActiveBlocks[target] = nil
+    ClientFX:Destroy(blockData.BlockHandleId)
 end
 
 function Block:_BreakBlock(target: Model)
@@ -134,9 +146,14 @@ function Block:_BreakBlock(target: Model)
     local blockData = ActiveBlocks[target]
     if not blockData then return end
 
+    ActiveBlocks[target] = nil
+
     StateManager.RemoveState(target, "Blocking")
 
-    blockData.IdleTrack:Stop()
+    blockData.Session.extraStopFunction = nil
+    blockData.Session:Stop(true)
+
+    ClientFX:Destroy(blockData.BlockHandleId)
 
     local humanoid = target:FindFirstChildWhichIsA("Humanoid")
     if humanoid then
@@ -145,11 +162,6 @@ function Block:_BreakBlock(target: Model)
         brokeTrack:Play()
     end
 
-    local handleId = ActiveBlocks[target].BlockHandleId
-    ClientFX:Destroy(handleId)
-
-    local vfx = blockData.Assets.BlockBrokeVFX
-
     ClientFX:RenderToClient(
         {
             Name = "EmitParticles",
@@ -157,13 +169,11 @@ function Block:_BreakBlock(target: Model)
         },
         {
             parent = hrp,
-            vfx = vfx,
+            vfx = blockData.Assets.BlockBrokeVFX,
             vfxCFrame = hrp.CFrame,
             position = hrp.Position,
         }
     )
-
-    ActiveBlocks[target] = nil
 end
 
 function Block:_RegenTick(dt)

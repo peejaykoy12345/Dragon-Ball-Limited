@@ -5,13 +5,11 @@ local Modules = ReplicatedStorage.Modules
 local GeneralUtils = Modules.Utilities.General
 local MediaUtils = Modules.Utilities.Media
 local WCS = require(ReplicatedStorage.Modules.Packages.WCS)
-local ClientFX = require(MediaUtils.ClientFX)
 local AnimationPlayer = require(MediaUtils.Animation)
 local TableUtils = require(GeneralUtils.TableUtils)
 local StateManager = require(GeneralUtils.StateManager)
 local MoveUtils = require(GeneralUtils.MoveUtils)
 local BufferInput = require(GeneralUtils.BufferInput)
-local BlockModule = require(GeneralUtils.Block)
 local Cooldown = require(GeneralUtils.Cooldown)
 
 local Pooling = require(MediaUtils.Pooling)
@@ -132,49 +130,6 @@ function ActionSession.new(params: ActionSessionParams)
     end)
 
     return self
-end
-
-export type ValidateTargetParams = {
-    PerfectBlockable: boolean,
-    Attacker: Model,
-}
-
-function ActionSession:ValidateTarget(target: Model, params: ValidateTargetParams): boolean
-    if not params.Attacker then
-        warn(`No attacker has been found`)
-        return false
-    end
-
-    local hrp = params.Attacker:FindFirstChild("HumanoidRootPart")
-    if not hrp then return false end
-
-    local blocked = BlockModule:CheckBlock(hrp.Position, target)
-
-    if params.PerfectBlockable then
-        local BlockState = BlockModule:CheckBlockState(params.Attacker, target)
-        if BlockState == "Perfect Block" and blocked then
-            MoveUtils:ApplyStun({
-                Duration = 1,
-                Target = params.Attacker,
-            })
-            ClientFX:RenderToClient(
-                {
-                    Name = "Highlight",
-                    Type = "Combat",
-                },
-                {
-                    parent = params.Attacker,
-                    vfxName = "PerfectBlock",
-                    position = hrp.Position,
-                }
-            )
-            self:Stop(true)
-
-            return false
-        end
-    end
-
-    return true
 end
 
 function ActionSession:InitTarget(target: Model)

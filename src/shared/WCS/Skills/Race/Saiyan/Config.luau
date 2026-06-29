@@ -4,6 +4,10 @@ return {
         KnockbackPower = 50,
         KnockbackDuration = 2,
         HitboxWeldOffsetCFrame = CFrame.new(0, 0, -3),
+        BlockParams = {
+            Blockable = true,
+            BlockDamage = 20
+        },
         ComboTimings = {
             {
                 Damage = 4,

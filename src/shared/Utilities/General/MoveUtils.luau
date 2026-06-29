@@ -6,8 +6,8 @@ local Modules = ReplicatedStorage.Modules
 local GeneralUtils = Modules.Utilities.General
 local StateManager = require(GeneralUtils.StateManager)
 local HitboxClass = require(GeneralUtils.HitboxClass)
-local Block = require(GeneralUtils.Block)
 local Cooldown = require(GeneralUtils.Cooldown)
+local Block
 
 local WCS = require(Modules.Packages.WCS)
 local Character = WCS.Character
@@ -102,49 +102,48 @@ export type ValidateHitParams = {
 	projectilePositon: Vector3?,
 	BlockParams: {
 		Blockable: boolean,
-		PerfectBlockable: boolean?,
+		BlockDamage: number,
 	}?,
 }
+
+local _Block
 
 function MoveUtils:ValidateHit(attacker: Model, target: Model, params: ValidateHitParams?): (boolean, string?)
     if attacker == target then return false end
     if StateManager.isCharacterInvincible(target) then return false end
     if RecentHits[target] and RecentHits[target][attacker] then return false end
 
-	local hrp = attacker:FindFirstChild("HumanoidRootPart")
-	if not hrp then return false end
+    local hrp = attacker:FindFirstChild("HumanoidRootPart")
+    if not hrp then return false end
 
-	if params then
-		local session = params.session
+    if params then
+        local session = params.session
 
-		local BlockParams = params.BlockParams
-		local PerfectBlockable: boolean?
-		if BlockParams then
-			PerfectBlockable = BlockParams.PerfectBlockable
-			if BlockParams.Blockable then
-				local attackerPosition = params.projectilePositon or hrp.Position
-				local BlockState = Block:CheckBlockState(attacker, target)
-				local IsBlocking = BlockState == "Blocking"
-				if IsBlocking and Block:CheckBlock(attackerPosition, target) then return false, "Blocked" end
-			end
-		end
+        local BlockParams = params.BlockParams
+        if BlockParams then
+            if BlockParams.Blockable then
+                if not Block then
+                    Block = require(GeneralUtils.Block)
+                end
 
-		if session  then
-			if PerfectBlockable == nil then PerfectBlockable = true end
-		 	if not session:ValidateTarget(target, {PerfectBlockable = PerfectBlockable, Attacker = attacker}) then
-				return false, "Blocked"
-			end
+                local attackerPosition = params.projectilePositon or hrp.Position
+                local BlockState = Block:CheckBlockState(attacker, target)
+                local IsBlocking = BlockState == "Blocking"
+                if IsBlocking and Block:CheckBlock(attackerPosition, target) then Block:HitBlock(target, BlockParams.BlockDamage); return false, "Blocked" end
+            end
+        end
 
-			if self.activeCounters[target] then
-				local callback = self.activeCounters[target]
-				self.activeCounters[target] = nil
-				session:StopAllSessions()
-				callback(attacker)    
-				return false
-			end
-		end
-	end
-	
+        if session then
+            if self.activeCounters[target] then
+                local callback = self.activeCounters[target]
+                self.activeCounters[target] = nil
+                session:StopAllSessions()
+                callback(attacker)
+                return false
+            end
+        end
+    end
+
     return true
 end
 
@@ -198,8 +197,8 @@ function MoveUtils:WeldParts(primary: BasePart, part: BasePart, weldName: "Weld"
 	return weld
 end
 
-function MoveUtils:GetPlayerContext(plr: Player): (Model?, BasePart?, Humanoid?)
-	local char = plr.Character
+function MoveUtils:GetWCSCharacterContext(WCS_Character): (Model?, BasePart?, Humanoid?)
+	local char = WCS_Character.Instance
 	if not char then return end
 
     local hrp = char:FindFirstChild("HumanoidRootPart") :: BasePart
