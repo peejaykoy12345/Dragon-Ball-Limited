@@ -52,5 +52,15 @@ return {
                 TargetStunDuration = 1
             }
         }
+    },
+    Heavy = {
+        Damage = 10,
+        KnockbackPower = 80,
+        Cooldown = 1.5,
+        HitboxWeldOffsetCFrame = CFrame.new(0, 0, -3),
+        BlockParams = {
+            Blockable = true,
+            BlockDamage = 100
+        },
     }
 }

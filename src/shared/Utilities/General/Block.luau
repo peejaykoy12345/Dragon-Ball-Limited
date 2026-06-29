@@ -80,6 +80,8 @@ function Block:StartBlock(target: Model, assets: BlockAssets)
     session:Start()
     session:PlayAndAddAnimation(target, assets.IdleAnim)
 
+    session:ApplyCastEffect()
+
     session.extraStopFunction = function(forceStopped)
         Block:StopBlock(target)
     end
