@@ -6,6 +6,7 @@ local Network = require(Modules.Network)
 local InputPackets = Network.Input.packets
 
 local Mouse = require(script.Mouse)
+local Keyboard = require(script.Keyboard)
 
 local InputService = {}
 
@@ -23,6 +24,7 @@ end
 function InputService:Init()
     Players.PlayerRemoving:Connect(function(plr)
         Mouse.PlayerRemoving(plr)
+        Keyboard.PlayerRemoving(plr)
     end)
 
     InputPackets.InputStarted.listen(function(data, plr)
@@ -33,6 +35,8 @@ function InputService:Init()
 
         if InputService:_IsMouseControl(input) then
             Mouse.HandleInput(plr, input, true)
+        else
+            Keyboard.HandleInput(plr, input, true)
         end
     end)
 
@@ -44,6 +48,8 @@ function InputService:Init()
 
         if InputService:_IsMouseControl(input) then
             Mouse.HandleInput(plr, input, false)
+        else
+            Keyboard.HandleInput(plr, input, false)
         end
     end)
 end
