@@ -25,7 +25,7 @@ function Skill:OnStartServer(_, buffered)
     BlockModule:StartBlock(self.Character.Instance, {
         IdleAnim = BlockAnimations.Block,
         BrokeAnim = BlockAnimations.BlockBreak,
-        BlockVFX = BlockVFX.Block,
+        BlockHitVFX = BlockVFX.Block,
         BlockBrokeVFX = BlockVFX.Break
     })
 end

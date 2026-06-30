@@ -143,12 +143,27 @@ function Velocity.ApplySlamdown(attacker: Model, target: Model, params: {
 	local knockback = params.Knockback or 80
 	local duration = params.Duration or 0.6
 
-	local AutoRotate = AutoRotateEffect.new(WCS_Target, false)
-	AutoRotate:Start(duration)
-
 	local direction = (hrp.Position - ehrp.Position)
 	direction = Vector3.new(direction.X, 0, direction.Z).Unit
 	local slamVector = (direction * knockback) + (Vector3.new(0, -1, 0) * knockback * 1.5)
+
+	local rayParams = RaycastParams.new()
+	rayParams.FilterType = Enum.RaycastFilterType.Exclude
+	rayParams.FilterDescendantsInstances = {target, attacker}
+
+	local rayDirection = slamVector.Unit * slamVector.Magnitude
+
+	local initialResult = workspace:Raycast(ehrp.Position + Vector3.new(0, -2.5, 0), rayDirection * (1 / 60), rayParams)
+	if initialResult then
+		print("LANDED")
+		if params.OnLand then
+			params.OnLand()
+		end
+		return
+	end
+
+	local AutoRotate = AutoRotateEffect.new(WCS_Target, false)
+	AutoRotate:Start(duration)
 
 	local lookDirection = (hrp.Position - ehrp.Position)
 	lookDirection = Vector3.new(lookDirection.X, 0, lookDirection.Z).Unit
@@ -168,12 +183,6 @@ function Velocity.ApplySlamdown(attacker: Model, target: Model, params: {
 
 	local cleanedUp = false
 	local heartbeatConnection
-
-	local rayParams = RaycastParams.new()
-	rayParams.FilterType = Enum.RaycastFilterType.Exclude
-	rayParams.FilterDescendantsInstances = {target, attacker}
-
-	local rayDirection = slamVector.Unit * slamVector.Magnitude
 
 	local function cleanup()
 		if cleanedUp then
@@ -211,11 +220,15 @@ function Velocity.ApplySlamdown(attacker: Model, target: Model, params: {
 		local origin = ehrp.Position
 		local result = workspace:Raycast(origin, rayDirection * dt, rayParams)
 
+		if not result then
+			result = workspace:Raycast(origin, Vector3.new(0, -3, 0), rayParams)
+		end
+
 		if result then
 			cleanup()
 		end
 	end)
-
+	
 	task.delay(duration + 2, function()
 		cleanup()
 	end)

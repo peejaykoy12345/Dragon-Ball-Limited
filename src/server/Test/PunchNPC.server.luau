@@ -13,7 +13,7 @@ local skillModule = WCS_Character:GetSkillFromString("Saiyan M1")
 while true do
     skillModule:Start()
 
-    task.wait(5)
+    task.wait(.1)
 
     skillModule:End()
 end
