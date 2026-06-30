@@ -25,14 +25,7 @@ function Skill:OnStartServer(_, buffered)
 
     local info = Config.M1
 
-    task.spawn(function()
-        while self._active do
-            if not self._isNotAllowed then
-                M1:M1(self.Character, info)
-            end
-            task.wait(0.1)
-        end
-    end)
+    M1:M1(self.Character, info)
 end
 
 function Skill:OnEndServer()

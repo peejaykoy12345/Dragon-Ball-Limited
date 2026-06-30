@@ -9,7 +9,20 @@ local HeldInputs: {[Player]: {[string]: boolean}} = {}
 
 local Utils = {}
 
-function Utils.HandleInput(plr: Player, skillName: string, input: string, started: boolean)
+function Utils.CanStartSkill(plr: Player, skillName: string): boolean
+    local char = plr.Character
+    if not char then return end
+
+    local WCSCharacter = Character.GetCharacterFromInstance(char)
+    if not WCSCharacter then return end
+
+    local skillModule = WCSCharacter:GetSkillFromString(skillName)
+    if not skillModule then return end
+
+    return skillModule.CanStart and skillModule:CanStart(char)
+end
+
+function Utils.HandleInput(plr: Player, skillName: string, input: string, started: boolean, skipBuffer: boolean?)
     local char = plr.Character
     if not char then return end
 

@@ -230,7 +230,7 @@ function M1:M1(WCS_Character, info)
 
     session.extraStopFunction = function()
         self.IsRunning = false
-        self.Finished:Fire()
+        self.Finished:Fire(char)
     end
 
     local m1Count = self:HandleM1Count(char, info.Cooldown)
@@ -260,7 +260,6 @@ function M1:M1(WCS_Character, info)
                 local ehrp = hitChar:FindFirstChild("HumanoidRootPart")
                 if not ehrp then return end
                 
-                self:PlaySFX(hitChar, m1Count, "Hit")
                 DamageUtils:ValidateAndDamage(char, hitChar, info.ComboTimings[m1Count].Damage)
 
                 MoveUtils:FacePlayer(ehrp, hrp)
@@ -269,8 +268,9 @@ function M1:M1(WCS_Character, info)
 
                 MoveUtils:ApplyStun({
                     Target = hitChar,
-                    Duration = 2,
+                    Duration = info.ComboTimings[m1Count].TargetStunDuration,
                 })
+                
                 if lastM1 then
                     self:OnLastM1Hit(char, hitChar, info)
                     self:PlayHitVFX(hitChar, true)

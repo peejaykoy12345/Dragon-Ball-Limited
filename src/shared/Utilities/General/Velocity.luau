@@ -1,5 +1,6 @@
 local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local Assets = ReplicatedStorage.Assets
 local KnockbackAnimations = Assets.Animations.Default.HitReactions.Knockback
@@ -81,7 +82,7 @@ function Velocity.CreateLV(parent: Instance, params: LinearVelocityParams)
 	return lv, att
 end
 
-function Velocity:ApplyKnockback(attacker: Model, target: Model, knockback: number, duration: number)
+function Velocity:ApplyKnockback(attacker: Model, target: Model, knockback: number | Vector3, duration: number)
 	local ehrp = target:FindFirstChild("HumanoidRootPart") :: BasePart
 	local hrp = attacker:FindFirstChild("HumanoidRootPart") :: BasePart
 
@@ -122,6 +123,101 @@ function Velocity:ApplyKnockback(attacker: Model, target: Model, knockback: numb
 		if linearVelocity then
 			linearVelocity:Destroy()
 		end
+	end)
+end
+
+function Velocity.ApplySlamdown(attacker: Model, target: Model, params: {
+	Knockback: number?,
+	Duration: number?,
+	OnLand: (() -> ())?,
+})
+	local ehrp = target:FindFirstChild("HumanoidRootPart") :: BasePart
+	local hrp = attacker:FindFirstChild("HumanoidRootPart") :: BasePart
+
+	local WCS_Target = WCS.Character.GetCharacterFromInstance(target)
+	if not ehrp or not hrp then
+		warn("Missing HumanoidRootPart on Caster or Target")
+		return
+	end
+
+	local knockback = params.Knockback or 80
+	local duration = params.Duration or 0.6
+
+	local AutoRotate = AutoRotateEffect.new(WCS_Target, false)
+	AutoRotate:Start(duration)
+
+	local direction = (hrp.Position - ehrp.Position)
+	direction = Vector3.new(direction.X, 0, direction.Z).Unit
+	local slamVector = (direction * knockback) + (Vector3.new(0, -1, 0) * knockback * 1.5)
+
+	local lookDirection = (hrp.Position - ehrp.Position)
+	lookDirection = Vector3.new(lookDirection.X, 0, lookDirection.Z).Unit
+	ehrp.CFrame = CFrame.new(ehrp.Position, ehrp.Position + lookDirection)
+
+	local linearVelocity = Velocity.CreateLV(ehrp, {
+		Velocity = slamVector,
+		Lifetime = duration,
+	})
+
+	local anim = Animation:Play(target, KnockbackAnimations.Start, {Priority = 1})
+	task.delay(anim.Length, function()
+		anim = Animation:Play(target, KnockbackAnimations.Loop, {Priority = 1})
+	end)
+
+	StateManager.SetState(target, "Knockback", true)
+
+	local cleanedUp = false
+	local heartbeatConnection
+
+	local rayParams = RaycastParams.new()
+	rayParams.FilterType = Enum.RaycastFilterType.Exclude
+	rayParams.FilterDescendantsInstances = {target, attacker}
+
+	local rayDirection = slamVector.Unit * slamVector.Magnitude
+
+	local function cleanup()
+		if cleanedUp then
+			return
+		end
+		cleanedUp = true
+
+		if heartbeatConnection then
+			heartbeatConnection:Disconnect()
+			heartbeatConnection = nil
+		end
+
+		if linearVelocity then
+			linearVelocity:Destroy()
+		end
+
+		if anim then
+			anim:Stop()
+		end
+
+		StateManager.RemoveState(target, "Knockback")
+		Animation:Play(target, KnockbackAnimations.End, {Priority = 1})
+
+		if params.OnLand then
+			params.OnLand()
+		end
+	end
+
+	heartbeatConnection = RunService.Heartbeat:Connect(function(dt)
+		if not ehrp or not ehrp.Parent then
+			cleanup()
+			return
+		end
+
+		local origin = ehrp.Position
+		local result = workspace:Raycast(origin, rayDirection * dt, rayParams)
+
+		if result then
+			cleanup()
+		end
+	end)
+
+	task.delay(duration + 2, function()
+		cleanup()
 	end)
 end
 

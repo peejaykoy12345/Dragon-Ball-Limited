@@ -55,8 +55,11 @@ return {
     },
     Heavy = {
         Damage = 10,
-        KnockbackPower = 80,
+        SlamDamage = 9,
+        KnockbackPower = 50,
+        KnockbackDuration = 2,
         Cooldown = 1.5,
+        StunDuration = 2,
         HitboxWeldOffsetCFrame = CFrame.new(0, 0, -3),
         BlockParams = {
             Blockable = true,

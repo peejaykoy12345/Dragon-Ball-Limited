@@ -10,7 +10,7 @@ local Keyboard = require(script.Keyboard)
 
 local InputService = {}
 
-local MOUSE_CONTROLS = {"M1"}
+local MOUSE_CONTROLS = {"M1", "M2"}
 
 function InputService:_IsMouseControl(input: string): boolean
     for _, control in MOUSE_CONTROLS do
