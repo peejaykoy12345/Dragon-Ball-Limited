@@ -37,8 +37,6 @@ function BufferService.TryConsumeBuffer(plr: Player)
 		if buffered.isHeld then
 			local stillHeld = buffered.isHeld()
 
-			print("Still held: ", stillHeld)
-
 			if not stillHeld then
 				EndBuffer[plr] = nil
 				return

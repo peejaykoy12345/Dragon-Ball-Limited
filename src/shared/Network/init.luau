@@ -30,6 +30,19 @@ return {
 			queries = {},
 		}
 	end),
+	Skill = ByteNetMax.defineNamespace("Skill", function()
+		return {
+			packets = {
+				SendTarget = ByteNetMax.definePacket({
+					value = ByteNetMax.struct({
+						Name = ByteNetMax.string,
+						Target = ByteNetMax.inst,
+					})
+				}),
+			},
+			queries = {},
+		}
+	end),
 	Fly = ByteNetMax.defineNamespace("Fly", function()
 		return {
 			packets = {

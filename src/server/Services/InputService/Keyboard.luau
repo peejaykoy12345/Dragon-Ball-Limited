@@ -4,6 +4,7 @@ local Keyboard = {}
 
 local SKILL_TO_KEY = {
     F = "Block",
+    X = "Z Vanish",
 }
 
 function Keyboard.HandleInput(plr: Player, input: string, started: boolean)

@@ -11,13 +11,13 @@ local Utils = {}
 
 function Utils.CanStartSkill(plr: Player, skillName: string): boolean
     local char = plr.Character
-    if not char then return end
+    if not char then return false end
 
     local WCSCharacter = Character.GetCharacterFromInstance(char)
-    if not WCSCharacter then return end
+    if not WCSCharacter then return false end
 
     local skillModule = WCSCharacter:GetSkillFromString(skillName)
-    if not skillModule then return end
+    if not skillModule then return false end
 
     return skillModule.CanStart and skillModule:CanStart(char)
 end
