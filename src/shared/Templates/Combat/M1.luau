@@ -279,7 +279,7 @@ function M1:M1(WCS_Character, info)
                 
                 DamageUtils:ValidateAndDamage(char, hitChar, info.ComboTimings[m1Count].Damage)
 
-                --MoveUtils:FacePlayer(ehrp, hrp)
+                MoveUtils:FacePlayer(ehrp, hrp)
 
                 self:PlayHitVFX(hitChar, false)
 

@@ -87,10 +87,7 @@ end
 
 function Heavy:Start(WCS_Character, info)
     local char, hrp = MoveUtils:GetWCSCharacterContext(WCS_Character)
-    print("PASSD")
     if not self:CanStart(char) then return end
-
-    print("Ran")
 
     local session = self:CreateSession(char)
     if not session then return end
