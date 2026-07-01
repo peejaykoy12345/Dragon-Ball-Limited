@@ -184,7 +184,7 @@ end
 function Velocity.ApplySlamdown(attacker: Model, target: Model, params: {
 	Knockback: number?,
 	Duration: number?,
-	OnLand: (() -> ())?,
+	OnLand: (({LandPosition: Vector3?}) -> ())?,
 })
 	local ehrp = target:FindFirstChild("HumanoidRootPart") :: BasePart
 	local hrp = attacker:FindFirstChild("HumanoidRootPart") :: BasePart
@@ -210,9 +210,8 @@ function Velocity.ApplySlamdown(attacker: Model, target: Model, params: {
 
 	local initialResult = workspace:Raycast(ehrp.Position + Vector3.new(0, -2.5, 0), rayDirection * (1 / 60), rayParams)
 	if initialResult then
-		print("LANDED")
 		if params.OnLand then
-			params.OnLand()
+			params.OnLand({LandPosition = initialResult.Position})
 		end
 		return
 	end
@@ -239,7 +238,7 @@ function Velocity.ApplySlamdown(attacker: Model, target: Model, params: {
 	local cleanedUp = false
 	local heartbeatConnection
 
-	local function cleanup()
+	local function cleanup(pos)
 		if cleanedUp then
 			return
 		end
@@ -261,8 +260,8 @@ function Velocity.ApplySlamdown(attacker: Model, target: Model, params: {
 		StateManager.RemoveState(target, "Knockback")
 		Animation:Play(target, KnockbackAnimations.End, {Priority = 1})
 
-		if params.OnLand then
-			params.OnLand()
+		if params.OnLand and pos then
+			params.OnLand({LandPosition = pos})
 		end
 	end
 
@@ -280,7 +279,7 @@ function Velocity.ApplySlamdown(attacker: Model, target: Model, params: {
 		end
 
 		if result then
-			cleanup()
+			cleanup(result.Position)
 		end
 	end)
 	

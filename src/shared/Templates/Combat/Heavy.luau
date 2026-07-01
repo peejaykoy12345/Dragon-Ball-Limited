@@ -124,7 +124,17 @@ function Heavy:Start(WCS_Character, info)
                 Velocity.ApplySlamdown(char, hitChar, {
                     Knockback = info.KnockbackPower,
                     Duration = info.KnockbackDuration,
-                    OnLand = function()
+                    OnLand = function(ctx)
+                        ClientFX:RenderToClient(
+                            {
+                                Name = "Crater",
+                                Type = "General",
+                            },
+                            {
+                                vfxCFrame = CFrame.new(ctx.LandPosition),
+                                position = ctx.LandPosition,
+                            }
+                        )
                         DamageUtils:ValidateAndDamage(char, hitChar, info.SlamDamage)
                     end
                 })

@@ -3,14 +3,24 @@
 registry = "test"
 
 [[package]]
+name = "andremhpra/partcache"
+version = "1.0.0"
+dependencies = []
+
+[[package]]
 name = "cheetiedotpy/wcs"
 version = "2.5.0"
 dependencies = []
 
 [[package]]
+name = "egomoose/raycast-helper"
+version = "3.0.1"
+dependencies = []
+
+[[package]]
 name = "jhoray/dragon-ball-limited"
 version = "0.1.0"
-dependencies = [["ForgeVFX", "zilibobi/forge-vfx@2.4.0"], ["WCS", "cheetiedotpy/wcs@2.5.0"]]
+dependencies = [["ForgeVFX", "zilibobi/forge-vfx@2.4.0"], ["PartCache", "andremhpra/partcache@1.0.0"], ["RaycastHelper", "egomoose/raycast-helper@3.0.1"], ["WCS", "cheetiedotpy/wcs@2.5.0"]]
 
 [[package]]
 name = "zilibobi/forge-vfx"

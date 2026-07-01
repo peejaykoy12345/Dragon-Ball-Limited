@@ -5,5 +5,7 @@ registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 
 [dependencies]
+RaycastHelper = "egomoose/raycast-helper@3.0.1"
 WCS = "cheetiedotpy/wcs@2.4.0"
 ForgeVFX = "zilibobi/forge-vfx@^2.4.0"
+PartCache = "andremhpra/partcache@1.0.0"

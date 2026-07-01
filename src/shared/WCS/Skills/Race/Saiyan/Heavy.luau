@@ -4,7 +4,6 @@ local Assets = ReplicatedStorage.Assets
 local SaiyanAnims = Assets.Animations.Characters.Saiyan
 
 local Modules = ReplicatedStorage.Modules
-local BufferInput = require(Modules.Utilities.General.BufferInput)
 local WCS = require(Modules.Packages.WCS)
 
 local HEAVY_BASE = require(ReplicatedStorage.Modules.Templates.Combat.Heavy)
@@ -21,7 +20,6 @@ function Skill:CanStart(char: Model)
 end
 
 function Skill:OnStartServer(_, buffered)
-    print("Heavy ran")
    Heavy:Start(self.Character, Config.Heavy)
 end
 

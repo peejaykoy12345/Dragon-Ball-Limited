@@ -16,6 +16,7 @@ function Saiyan.Setup(WCS_Character)
     end
 
     for _, skillModule in ipairs(BaseSkills) do
+        if skillModule.Name == "Config" then continue end
         if registered[skillModule.Name] then continue end
         require(skillModule).new(WCS_Character)
     end

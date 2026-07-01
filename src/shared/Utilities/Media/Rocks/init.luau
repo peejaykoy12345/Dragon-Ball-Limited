@@ -25,7 +25,7 @@ function RockModule.WallCrater(Center : CFrame, Direction : Vector3, Radius : nu
 	CheckDebrisFolder()
 
 	local raycastParams = RaycastParams.new()
-	raycastParams.FilterDescendantsInstances = { workspace.Entities, workspace.Debris }
+	raycastParams.FilterDescendantsInstances = { workspace.LivingBeings, workspace.Debris }
 	raycastParams.FilterType = Enum.RaycastFilterType.Exclude
 	raycastParams.IgnoreWater = true
 
@@ -100,7 +100,7 @@ function RockModule.Crater(Center : CFrame, Radius : number, MinRocks : number, 
 	CheckDebrisFolder()
 
 	local raycastParams = RaycastParams.new()
-	raycastParams.FilterDescendantsInstances = { workspace.Entities }
+	raycastParams.FilterDescendantsInstances = { workspace.LivingBeings }
 	raycastParams.FilterType = Enum.RaycastFilterType.Exclude
 	raycastParams.IgnoreWater = true
 	local ray = workspace:Raycast(Center.Position, Vector3.new(0,-1000,0), raycastParams)
@@ -232,7 +232,7 @@ function RockModule.RockSpawn(Part,MinimumSize,MaxSize,Time,TimeToWait,PosInCFra
 	task.spawn(function()
 		local Params = RaycastParams.new()
 		Params.FilterType = Enum.RaycastFilterType.Exclude
-		Params.FilterDescendantsInstances = {workspace.Debris,workspace.Entities}
+		Params.FilterDescendantsInstances = {workspace.Debris,workspace.LivingBeings}
 
 		--Params.FilterType = Enum.RaycastFilterType.Include
 		--Params.FilterDescendantsInstances = {workspace.Map}
