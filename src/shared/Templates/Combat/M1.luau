@@ -168,8 +168,25 @@ function M1:ApplyVelocity(char: Model, enemy: Model)
     local function createBv(parent, vel, mass)
         local bv = Velocity.CreateBV(parent, Vector3.new(mass + 30000, 0, mass + 30000))
         bv.Velocity = vel
+
+        Velocity.ApplyVelocityPhysicsOverride({
+            Target = parent.Parent,
+            Duration = .075,
+            Velocity = vel,
+            Type = "BodyVelocity",
+            MaxForce = Vector3.new(mass + 30000, 0, mass + 30000),
+        })
+
         Debris:AddItem(bv, .075)
     end
+
+    char:SetAttribute("PhysicsOverride", true)
+    enemy:SetAttribute("PhysicsOverride", true)
+
+    task.delay(.75, function()
+        char:SetAttribute("PhysicsOverride", false)
+        enemy:SetAttribute("PhysicsOverride", false)
+    end)
 
     createBv(hrp, hrp.CFrame.LookVector * 14, Mass1)
     createBv(ehrp, hrp.CFrame.LookVector * 14, Mass2)

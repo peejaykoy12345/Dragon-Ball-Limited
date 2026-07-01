@@ -33,7 +33,14 @@ return {
 	Fly = ByteNetMax.defineNamespace("Fly", function()
 		return {
 			packets = {
-
+				FlyVelocityOverride = ByteNetMax.definePacket({
+					value = ByteNetMax.struct({
+						Velocity = ByteNetMax.vec3,
+						Duration = ByteNetMax.float32,
+						Type = ByteNetMax.string,
+						MaxForce = ByteNetMax.optional(ByteNetMax.vec3)
+					})
+				}),
 			},
 			queries = {
 				RequestToggleFastFly = ByteNetMax.defineQuery({

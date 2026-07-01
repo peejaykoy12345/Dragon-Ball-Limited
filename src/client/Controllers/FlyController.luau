@@ -13,6 +13,7 @@ local AnimationPlayer = require(Modules.Utilities.Media.Animation)
 
 local Network = require(ReplicatedStorage.Modules.Network)
 local RequestToggleFastFly = Network.Fly.queries.RequestToggleFastFly
+local FlyVelocityOverride = Network.Fly.packets.FlyVelocityOverride
 
 local FlyController = {}
 
@@ -179,6 +180,20 @@ function FlyController:_GetSpeedScale(hum: Humanoid): number
 	return hum.WalkSpeed / CONFIG.BASE_WALK_SPEED
 end
 
+function FlyController:_ApplyVelocityOverride(velocity: Vector3, duration: number, velType: string, maxForce: Vector3?)
+	self.velocityOverride = {
+		Velocity = velocity,
+		Type = velType,
+		MaxForce = maxForce,
+	}
+
+	task.delay(duration, function()
+		if self.velocityOverride and self.velocityOverride.Velocity == velocity then
+			self.velocityOverride = nil
+		end
+	end)
+end
+
 function FlyController:_StartFly()
 	local char = self.plr.Character
 	if not char then return end
@@ -199,6 +214,7 @@ function FlyController:_StopFly()
 	if not self.isFlying then return end
 
 	self.isFlying = false
+	self.velocityOverride = nil
 	self:_SetAnimation(nil)
 	self:_DestroyFlyConstraints()
 
@@ -226,6 +242,7 @@ function FlyController:Init()
 	self.upHeld = false
 	self.downHeld = false
 	self.boostHeld = false
+	self.velocityOverride = nil
 
 	local function onCharacterAdded(char)
 		self:_StopFly()
@@ -242,6 +259,11 @@ function FlyController:Init()
 		onCharacterAdded(self.plr.Character)
 	end
 	self.plr.CharacterAdded:Connect(onCharacterAdded)
+
+	FlyVelocityOverride.listen(function(data)
+		if not self.isFlying then return end
+		self:_ApplyVelocityOverride(data.Velocity, data.Duration, data.Type, data.MaxForce)
+	end)
 
 	UserInputService.InputBegan:Connect(function(input, gameProcessed)
 		if gameProcessed then return end
@@ -287,6 +309,16 @@ function FlyController:Init()
 		local hrp = char and char:FindFirstChild("HumanoidRootPart")
 		local hum = char and char:FindFirstChildWhichIsA("Humanoid")
 		if not hrp or not hum then return end
+
+		if self.velocityOverride then
+			if self.velocityOverride.MaxForce then
+				self.linearVelocity.MaxForce = self.velocityOverride.MaxForce.Magnitude
+			end
+			self.linearVelocity.VectorVelocity = self.velocityOverride.Velocity
+			return
+		end
+
+		self.linearVelocity.MaxForce = math.huge
 
 		if StateManager.isActionBlocked(char, BLOCKED_SKIP) then
 			self.linearVelocity.VectorVelocity = Vector3.zero

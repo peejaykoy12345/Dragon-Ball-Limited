@@ -2,6 +2,8 @@ local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
+local Players = game:GetService("Players")
+
 local Assets = ReplicatedStorage.Assets
 local KnockbackAnimations = Assets.Animations.Default.HitReactions.Knockback
 
@@ -11,9 +13,62 @@ local WCS = require(Modules.Packages.WCS)
 local StateManager = require(ReplicatedStorage.Modules.Utilities.General.StateManager)
 local Animation = require(ReplicatedStorage.Modules.Utilities.Media.Animation)
 
+local Network = require(ReplicatedStorage.Modules.Network)
+local FlyVelocityOverride = Network.Fly.packets.FlyVelocityOverride
+
 local AutoRotateEffect = require(ReplicatedStorage.Modules.WCS.StatusEffects.AutoRotate)
 
 local Velocity = {}
+
+type PhysicsOverrideParams = {
+	Target: Model,
+	Type: string,
+	Duration: number,
+	Velocity: Vector3,
+	MaxForce: Vector3,
+}
+
+
+function Velocity.ApplyVelocityPhysicsOverride(params: PhysicsOverrideParams)
+    local target = params.Target
+    local hrp = target:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local player = Players:GetPlayerFromCharacter(target)
+
+    if player then
+        FlyVelocityOverride.sendTo({
+            Velocity = params.Velocity,
+            Duration = params.Duration,
+            Type = params.Type,
+            MaxForce = params.MaxForce,
+        }, player)
+        return
+    end
+
+    if params.Type == "LinearVelocity" then
+		if target.Name == "FlyRig" then
+			target:SetAttribute("FlyVelocityOverride", params.Velocity)
+			task.delay(params.Duration, function()
+				if target:GetAttribute("FlyVelocityOverride") == params.Velocity then
+					target:SetAttribute("FlyVelocityOverride", nil)
+				end
+			end)
+			return
+		end
+        Velocity.CreateLV(hrp, {
+            Velocity = params.Velocity,
+            MaxForce = if params.MaxForce then params.MaxForce.Magnitude else nil,
+            Lifetime = params.Duration,
+        })
+    elseif params.Type == "BodyVelocity" then
+        Velocity.CreateBodyVelocity(hrp, {
+            Velocity = params.Velocity,
+            MaxForce = params.MaxForce,
+            Lifetime = params.Duration,
+        })
+    end
+end
 
 function Velocity.CreateBV(parent: Instance, MaxForce: Vector3)
     local bv = Instance.new("BodyVelocity")

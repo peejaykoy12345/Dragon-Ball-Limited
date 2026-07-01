@@ -54,6 +54,12 @@ RunService.Heartbeat:Connect(function()
 		end
 	end
 
+	local overrideVelocity = flyNpc:GetAttribute("FlyVelocityOverride")
+	if overrideVelocity then
+		linearVelocity.VectorVelocity = overrideVelocity
+		return
+	end
+
 	if StateManager.isActionBlocked(flyNpc) then
 		linearVelocity.VectorVelocity = Vector3.zero
 		return
