@@ -15,12 +15,16 @@ local Animation = require(ReplicatedStorage.Modules.Utilities.Media.Animation)
 
 local Network = require(ReplicatedStorage.Modules.Network)
 local FlyVelocityOverride = Network.Fly.packets.FlyVelocityOverride
+local StopFlyVelocityOverride = Network.Fly.packets.StopFlyVelocityOverride
 
 local AutoRotateEffect = require(ReplicatedStorage.Modules.WCS.StatusEffects.AutoRotate)
 
 local Velocity = {}
+Velocity.ActiveOverrides = {}
+Velocity.ActiveKnockbacks = {}
 
 type PhysicsOverrideParams = {
+	Name: string?,
 	Target: Model,
 	Type: string,
 	Duration: number,
@@ -28,6 +32,54 @@ type PhysicsOverrideParams = {
 	MaxForce: Vector3,
 }
 
+
+function Velocity:_RegisterOverride(target: Model, name: string, data: {[string]: any})
+	if not Velocity.ActiveOverrides[target] then
+		Velocity.ActiveOverrides[target] = {}
+	end
+	Velocity.ActiveOverrides[target][name] = data
+end
+
+function Velocity:_ClearOverride(target: Model, name: string)
+	local overrides = Velocity.ActiveOverrides[target]
+	if not overrides then return end
+
+	overrides[name] = nil
+
+	if not next(overrides) then
+		Velocity.ActiveOverrides[target] = nil
+	end
+end
+
+function Velocity.RemovePhysicsOverride(target: Model, name: string)
+	local overrides = Velocity.ActiveOverrides[target]
+	if not overrides then return end
+
+	local override = overrides[name]
+	if not override then return end
+
+	if override.Thread then
+		task.cancel(override.Thread)
+	end
+
+	if override.Type == "Player" then
+		local player = Players:GetPlayerFromCharacter(target)
+		if player then
+			StopFlyVelocityOverride.sendTo({Name = name}, player)
+		end
+	elseif override.Type == "FlyRig" then
+		target:SetAttribute("FlyVelocityOverride", nil)
+	else
+		if override.Instance then
+			override.Instance:Destroy()
+		end
+		if override.Attachment then
+			override.Attachment:Destroy()
+		end
+	end
+
+	Velocity:_ClearOverride(target, name)
+end
 
 function Velocity.ApplyVelocityPhysicsOverride(params: PhysicsOverrideParams)
     local target = params.Target
@@ -38,34 +90,55 @@ function Velocity.ApplyVelocityPhysicsOverride(params: PhysicsOverrideParams)
 
     if player then
         FlyVelocityOverride.sendTo({
+			Name = params.Name,
             Velocity = params.Velocity,
             Duration = params.Duration,
             Type = params.Type,
             MaxForce = params.MaxForce,
         }, player)
+
+        if params.Name then
+            local thread = task.delay(params.Duration, function()
+                Velocity:_ClearOverride(target, params.Name)
+            end)
+            Velocity:_RegisterOverride(target, params.Name, {Type = "Player", Thread = thread})
+        end
         return
     end
 
     if params.Type == "LinearVelocity" then
 		if target.Name == "FlyRig" then
 			target:SetAttribute("FlyVelocityOverride", params.Velocity)
-			task.delay(params.Duration, function()
+
+			local thread = task.delay(params.Duration, function()
 				if target:GetAttribute("FlyVelocityOverride") == params.Velocity then
 					target:SetAttribute("FlyVelocityOverride", nil)
 				end
+				if params.Name then
+					Velocity:_ClearOverride(target, params.Name)
+				end
 			end)
+
+			if params.Name then
+				Velocity:_RegisterOverride(target, params.Name, {Type = "FlyRig", Thread = thread})
+			end
 			return
 		end
+
         Velocity.CreateLV(hrp, {
             Velocity = params.Velocity,
             MaxForce = if params.MaxForce then params.MaxForce.Magnitude else nil,
             Lifetime = params.Duration,
+            OverrideTarget = target,
+            OverrideName = params.Name,
         })
     elseif params.Type == "BodyVelocity" then
         Velocity.CreateBodyVelocity(hrp, {
             Velocity = params.Velocity,
             MaxForce = params.MaxForce,
             Lifetime = params.Duration,
+            OverrideTarget = target,
+            OverrideName = params.Name,
         })
     end
 end
@@ -82,6 +155,8 @@ type BodyVelocityParams = {
 	Attachment: Attachment?,
 	MaxForce: Vector3?,
 	Lifetime: number?,
+	OverrideTarget: Model?,
+	OverrideName: string?,
 }
 
 function Velocity.CreateBodyVelocity(parent: Instance, params: BodyVelocityParams): BodyVelocity
@@ -91,10 +166,23 @@ function Velocity.CreateBodyVelocity(parent: Instance, params: BodyVelocityParam
 	bv.Parent = parent
 
 	local lifetime = params.Lifetime
+	local thread
+
 	if lifetime then
-		task.delay(lifetime, function()
+		thread = task.delay(lifetime, function()
 			bv:Destroy()
+			if params.OverrideTarget and params.OverrideName then
+				Velocity:_ClearOverride(params.OverrideTarget, params.OverrideName)
+			end
 		end)
+	end
+
+	if params.OverrideTarget and params.OverrideName then
+		Velocity:_RegisterOverride(params.OverrideTarget, params.OverrideName, {
+			Type = "BodyVelocity",
+			Instance = bv,
+			Thread = thread,
+		})
 	end
 
 	return bv
@@ -107,6 +195,8 @@ type LinearVelocityParams = {
 	Lifetime: number?,
 	Name: string?,
 	RelativeTo: "World" | "Attachment"?,
+	OverrideTarget: Model?,
+	OverrideName: string?,
 }
 
 function Velocity.ParentAndCreateAttachment(parent: Instance)
@@ -127,11 +217,25 @@ function Velocity.CreateLV(parent: Instance, params: LinearVelocityParams)
 	lv.Parent = parent
 
 	local lifetime = params.Lifetime
+	local thread
+
 	if lifetime then
-		task.delay(lifetime, function()
+		thread = task.delay(lifetime, function()
 			lv:Destroy()
 			att:Destroy()
+			if params.OverrideTarget and params.OverrideName then
+				Velocity:_ClearOverride(params.OverrideTarget, params.OverrideName)
+			end
 		end)
+	end
+
+	if params.OverrideTarget and params.OverrideName then
+		Velocity:_RegisterOverride(params.OverrideTarget, params.OverrideName, {
+			Type = "LinearVelocity",
+			Instance = lv,
+			Attachment = att,
+			Thread = thread,
+		})
 	end
 
 	return lv, att
@@ -160,13 +264,20 @@ function Velocity:ApplyKnockback(attacker: Model, target: Model, knockback: numb
 	local linearVelocity = Velocity.CreateLV(ehrp, {Velocity = direction * knockback})
 
 	local anim = Animation:Play(target, KnockbackAnimations.Start, {Priority = 1})
-	task.delay(anim.Length, function()
+	local loopThread = task.delay(anim.Length, function()
 		anim = Animation:Play(target, KnockbackAnimations.Loop, {Priority = 1})
 	end)
 
 	StateManager.SetState(target, "Knockback", true)
 
-	task.delay(duration, function()
+	local cleanedUp = false
+
+	local function cleanup()
+		if cleanedUp then return end
+		cleanedUp = true
+
+		task.cancel(loopThread)
+
 		if anim then
 			anim:Stop()
 		end
@@ -174,11 +285,28 @@ function Velocity:ApplyKnockback(attacker: Model, target: Model, knockback: numb
 		StateManager.RemoveState(target, "Knockback")
 
 		Animation:Play(target, KnockbackAnimations.End, {Priority = 1})
-		
+
 		if linearVelocity then
 			linearVelocity:Destroy()
 		end
-	end)
+
+		Velocity.ActiveKnockbacks[target] = nil
+	end
+
+	local timeoutThread = task.delay(duration, cleanup)
+
+	Velocity.ActiveKnockbacks[target] = {
+		Thread = timeoutThread,
+		Cleanup = cleanup,
+	}
+end
+
+function Velocity.CancelKnockback(target: Model)
+	local knockback = Velocity.ActiveKnockbacks[target]
+	if not knockback then return end
+
+	task.cancel(knockback.Thread)
+	knockback.Cleanup()
 end
 
 function Velocity.ApplySlamdown(attacker: Model, target: Model, params: {

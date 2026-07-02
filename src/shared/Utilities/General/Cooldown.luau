@@ -16,13 +16,17 @@ function Cooldown:SetCooldown(char: Model, action: string, cooldown: number)
     if not self.Cooldowns[char] then
         self:InitializeCharacter(char)
     end
-    
-    self.Cooldowns[char][action] = true
 
-    task.delay(cooldown, function()
+    if self.Cooldowns[char][action] then
+        task.cancel(self.Cooldowns[char][action])
+    end
+
+    local thread = task.delay(cooldown, function()
         if not self.Cooldowns[char] then return end
         self.Cooldowns[char][action] = nil
     end)
+
+    self.Cooldowns[char][action] = thread
 
     --[[local plr = Players:GetPlayerFromCharacter(char)
     if plr then
@@ -34,11 +38,21 @@ function Cooldown:SetCooldown(char: Model, action: string, cooldown: number)
     end]]
 end
 
+function Cooldown:CancelCooldown(char: Model, action: string)
+    if not self.Cooldowns[char] then return end
+
+    local thread = self.Cooldowns[char][action]
+    if not thread then return end
+
+    task.cancel(thread)
+    self.Cooldowns[char][action] = nil
+end
+
 function Cooldown:IsOnCooldown(char: Model, action: string): boolean
     if not self.Cooldowns then
         return false
     end
-    
+
     if not self.Cooldowns[char] then
         return false
     end

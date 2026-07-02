@@ -133,14 +133,18 @@ function M1:HandleM1Count(char: Model, cooldown): number
     local Now_Clock = os.clock()
 	char:SetAttribute("LastM1", Now_Clock)
 
-	task.delay(1, function()
-    if char and char:GetAttribute("LastM1") == Now_Clock then
-            char:SetAttribute("Combo", 0) 
-            Cooldown:SetCooldown(char, script.Name, cooldown)
-        end
-    end)
+    local currentM1Count = char:GetAttribute("Combo") or 0
+    currentM1Count += 1
 
     local maxM1Count = #self.Anims
+
+	task.delay(1, function()
+    -- Dont auto reset if this is for the last m1
+    if char and char:GetAttribute("LastM1") == Now_Clock and currentM1Count >= maxM1Count then
+            char:SetAttribute("Combo", 0) 
+            Cooldown:SetCooldown(char, "M1", cooldown)
+        end
+    end)
 
 	local currentCombo = char:GetAttribute("Combo") or 0
     char:SetAttribute("Combo", currentCombo + 1 > maxM1Count and 1 or currentCombo + 1)
@@ -170,6 +174,7 @@ function M1:ApplyVelocity(char: Model, enemy: Model)
         bv.Velocity = vel
 
         Velocity.ApplyVelocityPhysicsOverride({
+            Name = "M1Knockback",
             Target = parent.Parent,
             Duration = .075,
             Velocity = vel,
@@ -276,6 +281,8 @@ function M1:M1(WCS_Character, info)
             hitbox = self:CreateHitbox(char, session, hbInfo, function(hitChar)
                 local ehrp = hitChar:FindFirstChild("HumanoidRootPart")
                 if not ehrp then return end
+
+                Velocity.CancelKnockback(hitChar)
                 
                 DamageUtils:ValidateAndDamage(char, hitChar, info.ComboTimings[m1Count].Damage)
 

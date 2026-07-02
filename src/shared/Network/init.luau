@@ -48,12 +48,18 @@ return {
 			packets = {
 				FlyVelocityOverride = ByteNetMax.definePacket({
 					value = ByteNetMax.struct({
+						Name = ByteNetMax.optional(ByteNetMax.string),
 						Velocity = ByteNetMax.vec3,
 						Duration = ByteNetMax.float32,
 						Type = ByteNetMax.string,
-						MaxForce = ByteNetMax.optional(ByteNetMax.vec3)
+						MaxForce = ByteNetMax.optional(ByteNetMax.vec3),
 					})
 				}),
+				StopFlyVelocityOverride = ByteNetMax.definePacket({
+					value = ByteNetMax.struct({
+						Name = ByteNetMax.optional(ByteNetMax.string),
+					})
+				})
 			},
 			queries = {
 				RequestToggleFastFly = ByteNetMax.defineQuery({

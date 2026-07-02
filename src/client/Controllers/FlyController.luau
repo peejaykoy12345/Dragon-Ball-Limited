@@ -14,6 +14,7 @@ local AnimationPlayer = require(Modules.Utilities.Media.Animation)
 local Network = require(ReplicatedStorage.Modules.Network)
 local RequestToggleFastFly = Network.Fly.queries.RequestToggleFastFly
 local FlyVelocityOverride = Network.Fly.packets.FlyVelocityOverride
+local StopFlyVelocityOverride = Network.Fly.packets.StopFlyVelocityOverride
 
 local FlyController = {}
 
@@ -180,11 +181,12 @@ function FlyController:_GetSpeedScale(hum: Humanoid): number
 	return hum.WalkSpeed / CONFIG.BASE_WALK_SPEED
 end
 
-function FlyController:_ApplyVelocityOverride(velocity: Vector3, duration: number, velType: string, maxForce: Vector3?)
+function FlyController:_ApplyVelocityOverride(velocity: Vector3, duration: number, velType: string, maxForce: Vector3?, name: string?)
 	self.velocityOverride = {
 		Velocity = velocity,
 		Type = velType,
 		MaxForce = maxForce,
+		Name = name,
 	}
 
 	task.delay(duration, function()
@@ -262,7 +264,13 @@ function FlyController:Init()
 
 	FlyVelocityOverride.listen(function(data)
 		if not self.isFlying then return end
-		self:_ApplyVelocityOverride(data.Velocity, data.Duration, data.Type, data.MaxForce)
+		self:_ApplyVelocityOverride(data.Velocity, data.Duration, data.Type, data.MaxForce, data.Name)
+	end)
+
+	StopFlyVelocityOverride.listen(function(data)
+		if self.velocityOverride and self.velocityOverride.Name == data.Name then
+			self.velocityOverride = nil
+		end
 	end)
 
 	UserInputService.InputBegan:Connect(function(input, gameProcessed)

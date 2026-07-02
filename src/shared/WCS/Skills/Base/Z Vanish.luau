@@ -88,6 +88,7 @@ function Skill:OnStartServer(info, buffered)
         MoveUtils:SetPartsProperties(char:GetChildren(), "Transparency", 0, {hrp})
 
         Cooldown:SetCooldown(char, script.Name, Config.Cooldown)
+        Cooldown:CancelCooldown(char, "M1")
     end)
 
     task.delay(0.5, function()
