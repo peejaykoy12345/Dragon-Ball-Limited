@@ -80,7 +80,7 @@ function Skill:OnStartServer(info, buffered)
 			}
 		)
 
-		MoveUtils:SetPartsProperties(char:GetChildren(), "Transparency", 1, {hrp})
+		MoveUtils:SetPartsProperties(char:GetDescendants(), "Transparency", 1, {hrp})
 
 		Velocity.ApplyVelocityPhysicsOverride({
 			Name = "StepVanish",
@@ -100,7 +100,7 @@ function Skill:OnStartServer(info, buffered)
             StateManager.RemoveState(char, "IFrames")
 
             Cooldown:SetCooldown(char, script.Name, Config.Cooldown)
-			MoveUtils:SetPartsProperties(char:GetChildren(), "Transparency", 0, {hrp})
+			MoveUtils:SetPartsProperties(char:GetDescendants(), "Transparency", 0, {hrp})
 		end)
 	end)
 

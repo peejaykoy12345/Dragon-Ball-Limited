@@ -7,8 +7,8 @@ local StateManager = require(Modules.Utilities.General.StateManager)
 local flyNpc = workspace.LivingBeings.FlyRig
 
 local CONFIG = {
-	HOVER_HEIGHT_VARIANCE = 3,
-	BOB_SPEED = 1,
+	HOVER_HEIGHT_VARIANCE = 0,
+	BOB_SPEED = 0,
 	ALIGN_RESPONSIVENESS = 30,
 }
 
@@ -40,9 +40,6 @@ alignOrientation.Responsiveness = CONFIG.ALIGN_RESPONSIVENESS
 alignOrientation.CFrame = hrp.CFrame.Rotation
 alignOrientation.Parent = hrp
 
-local startY = hrp.Position.Y
-local startTime = tick()
-
 RunService.Heartbeat:Connect(function()
 	if not hrp.Parent then return end
 
@@ -65,12 +62,5 @@ RunService.Heartbeat:Connect(function()
 		return
 	end
 
-	local elapsed = tick() - startTime
-	local bobOffset = math.sin(elapsed * CONFIG.BOB_SPEED) * CONFIG.HOVER_HEIGHT_VARIANCE
-
-	local targetY = startY + bobOffset
-	local currentY = hrp.Position.Y
-	local verticalVelocity = (targetY - currentY) * 5
-
-	linearVelocity.VectorVelocity = Vector3.new(0, verticalVelocity, 0)
+	linearVelocity.VectorVelocity = Vector3.zero
 end)

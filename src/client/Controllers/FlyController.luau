@@ -313,14 +313,19 @@ function FlyController:Init()
 				self:_StartFly()
 			end
 		end
-
-		if not self.isFlying then return end
-		if not self.linearVelocity then return end
-
+		
 		local char = self.plr.Character
 		local hrp = char and char:FindFirstChild("HumanoidRootPart")
 		local hum = char and char:FindFirstChildWhichIsA("Humanoid")
 		if not hrp or not hum then return end
+
+		if StateManager.HasState(char, "Vanish") and self.boostHeld then
+			RequestToggleFastFly.invoke({Status = false})
+			self.boostHeld = false
+		end
+
+		if not self.isFlying then return end
+		if not self.linearVelocity then return end
 
 		if self.velocityOverride then
 			if self.velocityOverride.MaxForce then
