@@ -17,6 +17,8 @@ local FlyVelocityOverride = Network.Fly.packets.FlyVelocityOverride
 local StopFlyVelocityOverride = Network.Fly.packets.StopFlyVelocityOverride
 
 local FlyController = {}
+FlyController.isFlying = false
+FlyController.IsFlyingChanged = Instance.new("BindableEvent")
 
 local CONFIG = {
 	FLY_SPEED = 50,
@@ -207,6 +209,7 @@ function FlyController:_StartFly()
 	if StateManager.isActionBlocked(char, BLOCKED_SKIP) then return end
 
 	self.isFlying = true
+	self.IsFlyingChanged:Fire()
 	self:_CreateFlyConstraints(hrp)
 	self:_SetAnimation("Idle")
 	char:SetAttribute("Flying", true)
@@ -216,6 +219,7 @@ function FlyController:_StopFly()
 	if not self.isFlying then return end
 
 	self.isFlying = false
+	self.IsFlyingChanged:Fire()
 	self.velocityOverride = nil
 	self:_SetAnimation(nil)
 	self:_DestroyFlyConstraints()
