@@ -182,6 +182,7 @@ local RESTRICTED_ACTION_STATES = {
 	"Ragdoll",
 	"Knockback",
 	"FastFlight",
+	"Vanish",
 }
 
 function StateManager.isActionBlocked(char: Model, statesToSkip: {string}?): boolean

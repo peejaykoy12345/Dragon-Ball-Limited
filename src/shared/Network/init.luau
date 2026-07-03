@@ -39,6 +39,12 @@ return {
 						Target = ByteNetMax.inst,
 					})
 				}),
+				SendCFrame = ByteNetMax.definePacket({
+					value = ByteNetMax.struct({
+						Name = ByteNetMax.string,
+						CFrame = ByteNetMax.cframe,
+					})
+				})
 			},
 			queries = {},
 		}

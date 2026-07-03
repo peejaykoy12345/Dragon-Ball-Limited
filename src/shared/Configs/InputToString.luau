@@ -5,4 +5,5 @@ return {
     [Enum.UserInputType.MouseButton2] = "M2",
     [Enum.KeyCode.F] = "F",
     [Enum.KeyCode.X] = "X",
+    [Enum.KeyCode.Z] = "Z",
 }

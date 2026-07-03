@@ -23,16 +23,6 @@ local Velocity = {}
 Velocity.ActiveOverrides = {}
 Velocity.ActiveKnockbacks = {}
 
-type PhysicsOverrideParams = {
-	Name: string?,
-	Target: Model,
-	Type: string,
-	Duration: number,
-	Velocity: Vector3,
-	MaxForce: Vector3,
-}
-
-
 function Velocity:_RegisterOverride(target: Model, name: string, data: {[string]: any})
 	if not Velocity.ActiveOverrides[target] then
 		Velocity.ActiveOverrides[target] = {}
@@ -81,32 +71,43 @@ function Velocity.RemovePhysicsOverride(target: Model, name: string)
 	Velocity:_ClearOverride(target, name)
 end
 
+type PhysicsOverrideParams = {
+	Name: string?,
+	Target: Model,
+	Type: string,
+	Duration: number,
+	Velocity: Vector3,
+	MaxForce: Vector3,
+	ForceVelocity: boolean?,
+}
+
 function Velocity.ApplyVelocityPhysicsOverride(params: PhysicsOverrideParams)
-    local target = params.Target
-    local hrp = target:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
+	local target = params.Target
+	local hrp = target:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
 
-    local player = Players:GetPlayerFromCharacter(target)
+	local player = Players:GetPlayerFromCharacter(target)
 
-    if player then
-        FlyVelocityOverride.sendTo({
+	if player then
+		FlyVelocityOverride.sendTo({
 			Name = params.Name,
-            Velocity = params.Velocity,
-            Duration = params.Duration,
-            Type = params.Type,
-            MaxForce = params.MaxForce,
-        }, player)
+			Velocity = params.Velocity,
+			Duration = params.Duration,
+			Type = params.Type,
+			MaxForce = params.MaxForce,
+		}, player)
 
-        if params.Name then
-            local thread = task.delay(params.Duration, function()
-                Velocity:_ClearOverride(target, params.Name)
-            end)
-            Velocity:_RegisterOverride(target, params.Name, {Type = "Player", Thread = thread})
-        end
-        return
-    end
+		if params.Name then
+			local thread = task.delay(params.Duration, function()
+				Velocity:_ClearOverride(target, params.Name)
+			end)
+			Velocity:_RegisterOverride(target, params.Name, {Type = "Player", Thread = thread})
+		end
 
-    if params.Type == "LinearVelocity" then
+		if not params.ForceVelocity then return end
+	end
+
+	if params.Type == "LinearVelocity" then
 		if target.Name == "FlyRig" then
 			target:SetAttribute("FlyVelocityOverride", params.Velocity)
 
@@ -125,22 +126,22 @@ function Velocity.ApplyVelocityPhysicsOverride(params: PhysicsOverrideParams)
 			return
 		end
 
-        Velocity.CreateLV(hrp, {
-            Velocity = params.Velocity,
-            MaxForce = if params.MaxForce then params.MaxForce.Magnitude else nil,
-            Lifetime = params.Duration,
-            OverrideTarget = target,
-            OverrideName = params.Name,
-        })
-    elseif params.Type == "BodyVelocity" then
-        Velocity.CreateBodyVelocity(hrp, {
-            Velocity = params.Velocity,
-            MaxForce = params.MaxForce,
-            Lifetime = params.Duration,
-            OverrideTarget = target,
-            OverrideName = params.Name,
-        })
-    end
+		Velocity.CreateLV(hrp, {
+			Velocity = params.Velocity,
+			MaxForce = if params.MaxForce then params.MaxForce.Magnitude else nil,
+			Lifetime = params.Duration,
+			OverrideTarget = target,
+			OverrideName = params.Name,
+		})
+	elseif params.Type == "BodyVelocity" then
+		Velocity.CreateBodyVelocity(hrp, {
+			Velocity = params.Velocity,
+			MaxForce = params.MaxForce,
+			Lifetime = params.Duration,
+			OverrideTarget = target,
+			OverrideName = params.Name,
+		})
+	end
 end
 
 function Velocity.CreateBV(parent: Instance, MaxForce: Vector3)
