@@ -9,3 +9,6 @@ RaycastHelper = "egomoose/raycast-helper@3.0.1"
 WCS = "cheetiedotpy/wcs@2.4.0"
 ForgeVFX = "zilibobi/forge-vfx@^2.4.0"
 PartCache = "andremhpra/partcache@1.0.0"
+
+[server-dependencies]
+ProfileStore = "lm-loleris/profilestore@1.0.3"
