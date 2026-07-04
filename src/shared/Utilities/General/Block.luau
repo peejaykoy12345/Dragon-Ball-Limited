@@ -4,6 +4,7 @@ local RunService = game:GetService("RunService")
 
 local StateManager = require(ReplicatedStorage.Modules.Utilities.General.StateManager)
 local ActionSession = require(ReplicatedStorage.Modules.Utilities.General.ActionSession)
+local Animation = require(ReplicatedStorage.Modules.Utilities.Media.Animation)
 local ClientFX = require(ReplicatedStorage.Modules.Utilities.Media.ClientFX)
 
 local MoveUtils = require(ReplicatedStorage.Modules.Utilities.General.MoveUtils)
@@ -180,19 +181,14 @@ function Block:_BreakBlock(target: Model)
 		ClientFX:Destroy(blockData.BlockHandleId)
 	end
 
-	local humanoid = target:FindFirstChildWhichIsA("Humanoid")
-	if humanoid then
-		local animator = humanoid:FindFirstChildWhichIsA("Animator")
-		local brokeTrack = animator:LoadAnimation(blockData.Assets.BrokeAnim)
-		brokeTrack.Looped = false
-		brokeTrack:Play()
+	local brokeTrack = Animation:Play(target, blockData.Assets.BrokeAnim)
+	brokeTrack.Looped = false
 
-		MoveUtils:ApplyStun({
-			Target = target,
-			Duration = brokeTrack.Length,
-			Priority = 3,
-		})
-	end
+	MoveUtils:ApplyStun({
+		Target = target,
+		Duration = brokeTrack.Length,
+		Priority = 3,
+	})
 
 	ClientFX:RenderToClient(
 		{
@@ -206,6 +202,8 @@ function Block:_BreakBlock(target: Model)
 			position = hrp.Position,
 		}
 	)
+
+	target:SetAttribute("BlockDurability", CONFIG.BLOCK_DURABILITY)
 end
 
 function Block:_RegenTick(dt)
@@ -217,7 +215,7 @@ function Block:_RegenTick(dt)
 		local current = char:GetAttribute("BlockDurability")
 		if not current or current >= CONFIG.BLOCK_DURABILITY then continue end
 
-		local regen = CONFIG.BLOCK_DURABILITY * 0.05 * dt
+		local regen = CONFIG.BLOCK_DURABILITY * 0.1 * dt
 		char:SetAttribute("BlockDurability", math.min(current + regen, CONFIG.BLOCK_DURABILITY))
 	end
 end
