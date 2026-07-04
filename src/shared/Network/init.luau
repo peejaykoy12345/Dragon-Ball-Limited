@@ -13,6 +13,18 @@ return {
 			queries = {},
 		}
 	end),
+	["Main Menu"] = ByteNetMax.defineNamespace("Main Menu", function()
+		return {
+			packets = {
+				Notification = ByteNetMax.definePacket({
+					value = ByteNetMax.struct({
+						Message = ByteNetMax.string,
+					})
+				}),
+			},
+			queries = {},
+		}
+	end),
 	Input = ByteNetMax.defineNamespace("Input", function()
 		return {
 			packets = {
