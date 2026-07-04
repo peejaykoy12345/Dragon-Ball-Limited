@@ -50,7 +50,6 @@ function CustomizationUtils.PutOnClothing(char: Model, clothing: Model)
         if not charPart or not charPart:IsA("BasePart") then return end
 
         local refPart = referenceModel and referenceModel:FindFirstChild(modelName)
-        -- print("refPart for", modelName, ":", refPart)
 
         if refPart and refPart:IsA("BasePart") then
             local offset = refPart.CFrame:toObjectSpace(part.CFrame)
@@ -60,8 +59,6 @@ function CustomizationUtils.PutOnClothing(char: Model, clothing: Model)
             local scaledOffset = CFrame.new(offset.Position * scaleRatio) * offset.Rotation
             part.Size = part.Size * finalScale
             part.CFrame = charPart.CFrame * scaledOffset
-        else
-            -- warn("No refPart found for", modelName, "- clothing part will use template CFrame")
         end
 
         local weld = Instance.new("WeldConstraint")
@@ -74,7 +71,6 @@ function CustomizationUtils.PutOnClothing(char: Model, clothing: Model)
     end
 
     for _, model in ipairs(newClothing:GetChildren()) do
-        -- print("Model | Part name: ", model.Name)
         if model == referenceModel then continue end
 
         if model:IsA("Model") then
@@ -93,6 +89,61 @@ function CustomizationUtils.PutOnClothing(char: Model, clothing: Model)
     end
 
     newClothing.Parent = char
+end
+
+local SCALE_PARTS = {
+    "HumanoidRootPart",
+    "Head",
+    "UpperTorso", "LowerTorso",
+    "LeftUpperArm", "LeftLowerArm", "LeftHand",
+    "RightUpperArm", "RightLowerArm", "RightHand",
+    "LeftUpperLeg", "LeftLowerLeg", "LeftFoot",
+    "RightUpperLeg", "RightLowerLeg", "RightFoot",
+}
+
+function CustomizationUtils._ApplyScale(char: Model)
+    local heightScale = char:GetAttribute("HeightScale") or 1
+    local widthScale = char:GetAttribute("WidthScale") or 1
+    local scaleVec = Vector3.new(widthScale, heightScale, widthScale)
+
+    for _, partName in SCALE_PARTS do
+        local part = char:FindFirstChild(partName)
+        if not part or not part:IsA("BasePart") then continue end
+
+        local originalSize = part:GetAttribute("OriginalSize")
+        if not originalSize then
+            part:SetAttribute("OriginalSize", part.Size)
+            originalSize = part.Size
+        end
+
+        part.Size = originalSize * scaleVec
+    end
+
+    for _, descendant in char:GetDescendants() do
+        if not descendant:IsA("Motor6D") then continue end
+
+        local originalC0Pos = descendant:GetAttribute("OriginalC0Pos")
+        if not originalC0Pos then
+            descendant:SetAttribute("OriginalC0Pos", descendant.C0.Position)
+            descendant:SetAttribute("OriginalC1Pos", descendant.C1.Position)
+            originalC0Pos = descendant.C0.Position
+        end
+
+        local originalC1Pos = descendant:GetAttribute("OriginalC1Pos")
+
+        descendant.C0 = CFrame.new(originalC0Pos * scaleVec) * descendant.C0.Rotation
+        descendant.C1 = CFrame.new(originalC1Pos * scaleVec) * descendant.C1.Rotation
+    end
+end
+
+function CustomizationUtils.SetCharacterHeight(char: Model, scale: number)
+    char:SetAttribute("HeightScale", scale)
+    CustomizationUtils._ApplyScale(char)
+end
+
+function CustomizationUtils.SetCharacterWidth(char: Model, scale: number)
+    char:SetAttribute("WidthScale", scale)
+    CustomizationUtils._ApplyScale(char)
 end
 
 return CustomizationUtils

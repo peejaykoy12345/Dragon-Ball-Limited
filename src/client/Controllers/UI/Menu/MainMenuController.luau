@@ -14,7 +14,8 @@ function MainMenuController:Init()
         if input.KeyCode == Enum.KeyCode.T then
             local char = plr.Character
 
-            -- print("PRESSED")
+            CustomizationUtils.SetCharacterWidth(char, 1.60)
+            CustomizationUtils.SetCharacterHeight(char, 1.20)
             CustomizationUtils.PutOnHair(char, workspace["Customization Stuff"].Hairs["saiyan hair"]["M1"])
             CustomizationUtils.PutOnClothing(char, workspace["Customization Stuff"].Clothing["saiyan(Starter Oufit)"])
         end
