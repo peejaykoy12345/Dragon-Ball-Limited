@@ -1,5 +1,39 @@
 local CustomizationUtils = {}
 
+function CustomizationUtils.PutOnHair(char: Model, hair: Model)
+    local head = char:FindFirstChild("Head")
+    if not head then return end
+
+    local existing = char:FindFirstChild("Hair")
+    if existing then
+        existing:Destroy()
+    end
+
+    local newHair = hair:Clone()
+    newHair.Name = "Hair"
+
+    local handle = newHair.PrimaryPart or newHair:FindFirstChild("Handle") or newHair:FindFirstChild("Base")
+    if not handle then
+        warn("PutOnHair: no Handle part found in hair model", hair.Name)
+        newHair:Destroy()
+        return
+    end
+
+    for _, part in ipairs(newHair:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Anchored = false
+            part.CanCollide = false
+        end
+    end
+
+    newHair.Parent = char
+
+    local weld = Instance.new("Weld")
+    weld.Part0 = head
+    weld.Part1 = handle
+    weld.Parent = newHair
+end
+
 function CustomizationUtils.PutOnClothing(char: Model, clothing: Model)
     local existing = char:FindFirstChild("Clothing")
     if existing then

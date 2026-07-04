@@ -3,6 +3,8 @@ local UserInputService = game:GetService("UserInputService")
 
 local plr = Players.LocalPlayer
 
+local CustomizationUtils = require(game.ReplicatedStorage.Modules.Utilities.Misc.CustomizationUtils)
+
 local MainMenuController = {}
 
 function MainMenuController:Init()
@@ -13,7 +15,8 @@ function MainMenuController:Init()
             local char = plr.Character
 
             -- print("PRESSED")
-            require(game.ReplicatedStorage.Modules.Utilities.Misc.CustomizationUtils).PutOnClothing(char, workspace["Customization Stuff"].Clothing["saiyan(Starter Oufit)"])
+            CustomizationUtils.PutOnHair(char, workspace["Customization Stuff"].Hairs["saiyan hair"]["M1"])
+            CustomizationUtils.PutOnClothing(char, workspace["Customization Stuff"].Clothing["saiyan(Starter Oufit)"])
         end
     end)
 end 
