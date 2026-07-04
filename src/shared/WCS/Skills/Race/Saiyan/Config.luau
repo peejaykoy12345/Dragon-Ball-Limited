@@ -11,35 +11,35 @@ return {
         ComboTimings = {
             {
                 Damage = 4,
-                HitboxSize = Vector3.new(6, 5, 8),
+                HitboxSize = Vector3.new(9, 9, 9),
                 UserStunDuration = 0.25, 
                 TargetStunDuration = 0.6
             },
             {
                 Damage = 4, 
                 TotalDuration = 0.3, 
-                HitboxSize = Vector3.new(6.5, 5, 8), 
+                HitboxSize = Vector3.new(9, 9, 9), 
                 UserStunDuration = 0.25, 
                 TargetStunDuration = .6
             },
             {
                 Damage = 5, 
                 TotalDuration = 0.3, 
-                HitboxSize = Vector3.new(6.5, 5, 8), 
+                HitboxSize = Vector3.new(9, 9, 9),
                 UserStunDuration = 0.25, 
                 TargetStunDuration = .6
             },
             {
                 Damage = 5, 
                 TotalDuration = 0.3, 
-                HitboxSize = Vector3.new(6.5, 5, 8), 
+                HitboxSize = Vector3.new(9, 9, 9),
                 UserStunDuration = 0.25, 
                 TargetStunDuration = .6
             },
             { 
                 Damage = 6, 
                 TotalDuration = 0.3, 
-                HitboxSize = Vector3.new(6.5, 5, 8), 
+                HitboxSize = Vector3.new(9, 9, 9),
                 UserStunDuration = 0.25, 
                 TargetStunDuration = 1 
             },
@@ -47,7 +47,7 @@ return {
                 Damage = 8, 
                 TotalDuration = 1.0, 
                 HitboxDelay = 0.5, 
-                HitboxSize = Vector3.new(7, 5, 10), 
+                HitboxSize = Vector3.new(9, 9, 9),
                 UserStunDuration = .5, 
                 TargetStunDuration = 1
             }
