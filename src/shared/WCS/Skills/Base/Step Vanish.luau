@@ -61,6 +61,8 @@ function Skill:OnStartServer(info, buffered)
 		local hrp = char:FindFirstChild("HumanoidRootPart") :: BasePart
 		if not hrp then return end
 
+		local hitboxPart = char:FindFirstChild("Hitbox") :: BasePart
+
 		self.disconnect()
 		self.disconnect = nil
 
@@ -80,7 +82,7 @@ function Skill:OnStartServer(info, buffered)
 			}
 		)
 
-		MoveUtils:SetPartsProperties(char:GetDescendants(), "Transparency", 1, {hrp})
+		MoveUtils:SetPartsProperties(char:GetDescendants(), "Transparency", 1, {hrp, hitboxPart})
 
 		Velocity.ApplyVelocityPhysicsOverride({
 			Name = "StepVanish",
@@ -100,7 +102,7 @@ function Skill:OnStartServer(info, buffered)
             StateManager.RemoveState(char, "IFrames")
 
             Cooldown:SetCooldown(char, script.Name, Config.Cooldown)
-			MoveUtils:SetPartsProperties(char:GetDescendants(), "Transparency", 0, {hrp})
+			MoveUtils:SetPartsProperties(char:GetDescendants(), "Transparency", 0, {hrp, hitboxPart})
 		end)
 	end)
 

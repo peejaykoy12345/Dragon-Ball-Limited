@@ -50,6 +50,8 @@ function Skill:OnStartServer(info, buffered)
         local targetHrp = target:FindFirstChild("HumanoidRootPart") :: BasePart
         if not hrp or not targetHrp then return end
 
+        local hitboxPart = char:FindFirstChild("Hitbox") :: BasePart
+
         self.disconnect()
         self.disconnect = nil
 
@@ -66,7 +68,7 @@ function Skill:OnStartServer(info, buffered)
             }
         )
 
-        MoveUtils:SetPartsProperties(char:GetChildren(), "Transparency", 1, {hrp})
+        MoveUtils:SetPartsProperties(char:GetChildren(), "Transparency", 1, {hrp, hitboxPart})
 
         task.wait(.2)
 
@@ -85,7 +87,7 @@ function Skill:OnStartServer(info, buffered)
         local lookDirection = (targetHrp.Position - desiredPosition).Unit
         hrp.CFrame = CFrame.new(desiredPosition, desiredPosition + Vector3.new(lookDirection.X, 0, lookDirection.Z))
 
-        MoveUtils:SetPartsProperties(char:GetChildren(), "Transparency", 0, {hrp})
+        MoveUtils:SetPartsProperties(char:GetChildren(), "Transparency", 0, {hrp, hitboxPart})
 
         Cooldown:SetCooldown(char, script.Name, Config.Cooldown)
         Cooldown:CancelCooldown(char, "M1")
