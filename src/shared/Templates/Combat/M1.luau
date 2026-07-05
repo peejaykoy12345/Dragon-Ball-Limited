@@ -261,7 +261,7 @@ function M1:M1(WCS_Character, info)
     local trackLength = MoveUtils:GetTrackLengthOrDefault(track, 0.3, 0.2)
 
     self:PlaySFX(char, m1Count, "Miss")
-    self:ShowSwingVFX(char, m1Count)
+    -- self:ShowSwingVFX(char, m1Count)
 
     local lastM1 = m1Count >= #self.Anims
 

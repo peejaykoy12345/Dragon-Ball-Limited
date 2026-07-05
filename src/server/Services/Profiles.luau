@@ -1,13 +1,15 @@
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 
 local ServerPackages = ServerScriptService.ServerPackages
 local ProfileStore = require(ServerPackages.ProfileStore)
 
+local Network = require(ReplicatedStorage.Modules.Network)
+
 export type ProfileData = {
     Slots: {
-        [string]: {},
+        [string]: {[string]: {[string]: string | number}},
     },
 	SlotSelected: string,
 }
@@ -15,13 +17,19 @@ export type ProfileData = {
 local PROFILE_TEMPLATE: ProfileData = {
 	Slots = {
         ["1"] = {
-
+			Customization = {
+				Clothing = "Saiyan(Starter Oufit)",
+				Race = "Saiyan",
+				Hair = "Type 1",
+				BodyType = .8,
+				Height = .8,
+			}
         },
     },
     SlotSelected = "1",
 }
 
-local PlayerStore = ProfileStore.New("PlayerData_TESTV1", PROFILE_TEMPLATE)
+local PlayerStore = ProfileStore.New("PlayerData_TESTV7", PROFILE_TEMPLATE)
 local Profiles: {[Player]: typeof(PlayerStore:StartSessionAsync())} = {}
 local module = {}
 
@@ -70,6 +78,10 @@ end
 function module:Init()
 	Players.PlayerAdded:Connect(PlayerAdded)
 	Players.PlayerRemoving:Connect(PlayerRemoving)
+
+	Network["Main Menu"].queries.GetCustomizationData.listen(function(data, plr)
+		return self:GetSlotData(plr, "Customization")
+	end)
 end
 
 function module:GetProfile(plr: Player)

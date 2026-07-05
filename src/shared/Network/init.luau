@@ -15,14 +15,20 @@ return {
 	end),
 	["Main Menu"] = ByteNetMax.defineNamespace("Main Menu", function()
 		return {
-			packets = {
-				Notification = ByteNetMax.definePacket({
-					value = ByteNetMax.struct({
-						Message = ByteNetMax.string,
-					})
-				}),
+			packets = {},
+			queries = {
+				GetCustomizationData = ByteNetMax.defineQuery({
+					request = ByteNetMax.struct({}),
+					response = ByteNetMax.struct({
+						Clothing = ByteNetMax.string,
+						Race = ByteNetMax.string,
+						Hair = ByteNetMax.string,
+						BodyType = ByteNetMax.uint8,
+						Height = ByteNetMax.uint8,
+						HasCustomized = ByteNetMax.bool,
+					}),
+				})
 			},
-			queries = {},
 		}
 	end),
 	Input = ByteNetMax.defineNamespace("Input", function()
