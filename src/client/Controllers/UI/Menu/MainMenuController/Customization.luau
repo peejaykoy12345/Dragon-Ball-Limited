@@ -183,8 +183,7 @@ end
 
 function Customization:Init()
     self.btnClickCooldown = {}
-
-    self.customizationData = GetCustomizationData.invoke({})
+    self.customizationData = {}
 
     for _, btn in ipairs(CharacterAppearance:GetChildren()) do
         if table.find(CONFIG.TYPES, btn.Name) then
@@ -222,8 +221,6 @@ function Customization:Init()
         end
     end
 
-    CustomizationUtils.ApplyCustomizationDataToCharacter(PreviewChar, self.customizationData)
-
     self:_ConnectButtonClickedEvent(ConfirmButton, function()
         self:CloseCustomization()
         MainMenuPackets.ConfirmCustomization.send(self.customizationData)
@@ -231,6 +228,9 @@ function Customization:Init()
 end
 
 function Customization:OpenCustomization()
+    self.customizationData = GetCustomizationData.invoke({})
+    CustomizationUtils.ApplyCustomizationDataToCharacter(PreviewChar, self.customizationData)
+
     ScreenGui.Enabled = true
     self.Open = true
 end

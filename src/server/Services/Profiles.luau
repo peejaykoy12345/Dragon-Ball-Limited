@@ -21,7 +21,7 @@ export type ProfileData = {
 
 local PROFILE_TEMPLATE: ProfileData = {
 	Slots = {
-        ["1"] = {
+        ["Template"] = {
 			Customization = {
 				Clothing = "Saiyan(Starter Oufit)",
 				Race = "Saiyan",
@@ -101,13 +101,34 @@ function module:GetProfile(plr: Player)
 	return Profiles[plr]
 end
 
+function module:_EnsureSlot(profile)
+	local slotKey = profile.Data.SlotSelected
+	if profile.Data.Slots[slotKey] then return profile.Data.Slots[slotKey] end
+
+	local template = profile.Data.Slots["Template"]
+	local newSlot = {}
+
+	for k, v in template do
+		if type(v) == "table" then
+			local copy = {}
+			for k2, v2 in v do
+				copy[k2] = v2
+			end
+			newSlot[k] = copy
+		else
+			newSlot[k] = v
+		end
+	end
+
+	profile.Data.Slots[slotKey] = newSlot
+	return newSlot
+end
+
 function module:GetSlotData(plr: Player, dataName: string)
 	local profile = module:GetProfile(plr)
 	if not profile then return end
 
-	local slot = profile.Data.Slots[profile.Data.SlotSelected]
-	if not slot then return end
-
+	local slot = self:_EnsureSlot(profile)
 	return slot[dataName]
 end
 
@@ -115,9 +136,7 @@ function module:SetSlotData(plr: Player, dataName: string, value: any)
 	local profile = Profiles[plr]
 	if not profile then return end
 
-	local slot = profile.Data.Slots[profile.Data.SlotSelected]
-	if not slot then return end
-
+	local slot = self:_EnsureSlot(profile)
 	slot[dataName] = value
 end
 
@@ -125,9 +144,7 @@ function module:IncrementSlotData(plr: Player, dataName: string, amount: any)
 	local profile = Profiles[plr]
 	if not profile then return end
 
-	local slot = profile.Data.Slots[profile.Data.SlotSelected]
-	if not slot then return end
-
+	local slot = self:_EnsureSlot(profile)
 	slot[dataName] += amount
 end
 
@@ -135,8 +152,7 @@ function module:LoadSlotData(plr: Player)
 	local profile = Profiles[plr]
 	if not profile then return end
 
-	local slot = profile.Data.Slots[profile.Data.SlotSelected]
-	if not slot then return end
+	local slot = self:_EnsureSlot(profile)
 
 	local function applyCustomization(char)
 		CustomizationUtils.ApplyCustomizationDataToCharacter(char, slot.Customization)

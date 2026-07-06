@@ -21,7 +21,7 @@ return {
 				}),
 				ChangeSlot = ByteNetMax.definePacket({
 					value = ByteNetMax.struct({
-						Slot = ByteNetMax.uint8
+						Slot = ByteNetMax.uint8,
 					})
 				}),
 				ConfirmCustomization = ByteNetMax.definePacket({

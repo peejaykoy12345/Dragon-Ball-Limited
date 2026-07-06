@@ -38,6 +38,13 @@ function MainMenuService:Init()
     MainMenuPackets.Play.listen(function(data, plr)
         Profiles:LoadSlotData(plr)
     end)
+
+    MainMenuPackets.ChangeSlot.listen(function(data, plr)
+        local profile = Profiles:GetProfile(plr)
+        if not profile then return end
+
+        profile.Data.SlotSelected = tostring(data.Slot)
+    end)
 end
 
 return MainMenuService
