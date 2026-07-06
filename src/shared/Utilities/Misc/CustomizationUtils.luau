@@ -67,7 +67,7 @@ function CustomizationUtils.PutOnHair(char: Model, hair: Model)
 	end
 
 	newHair.Parent = char
-	newHair:PivotTo(head.CFrame)
+	newHair:SetPrimaryPartCFrame(head.CFrame)
 
 	local sourceRef = Instance.new("ObjectValue")
 	sourceRef.Name = "SourceHair"

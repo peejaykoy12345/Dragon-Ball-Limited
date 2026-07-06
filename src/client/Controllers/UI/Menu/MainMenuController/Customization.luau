@@ -2,6 +2,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 
+local Assets = ReplicatedStorage.Assets
+local Models = Assets.Models
+
 local plr = Players.LocalPlayer
 local ScreenGui = plr:WaitForChild("PlayerGui"):WaitForChild("MainMenu"):WaitForChild("Customization") :: ScreenGui
 local CustomizationOptions = ScreenGui:WaitForChild("Customization options")
@@ -22,13 +25,19 @@ local GetCustomizationData = MainMenuQueries.GetCustomizationData
 local CONFIG = {
     TYPES = {"Head/Hair"},
     SLIDER = {"Height", "Body Type"},
+    ASSET_FOLDER = {
+        ["Head/Hair"] = Models.Hair
+    },
+    EQUIP_FUNCTION = {
+        ["Head/Hair"] = CustomizationUtils.PutOnHair
+    },
     SLIDER_MIN_POS = 0.478,
     SLIDER_MAX_POS = 0.878,
     BUTTON_CLICK_COOLDOWN = 0.1,
     PROPORTIONS = {
         MINIMUM = {
-            Height = 0.8,
-            ["Body Type"] = 0.8,
+            Height = 1,
+            ["Body Type"] = 1,
         },
         MAXIMUM = {
             Height = 1.5,
@@ -42,7 +51,6 @@ Customization.__index = Customization
 
 function Customization:_ConnectButtonClickedEvent(btn: ImageButton | TextButton, fn: () -> ())
     btn.Activated:Connect(function()
-        print("Open: ", self.Open)
         if self.btnClickCooldown[btn] then return end
         if not self.Open then return end
 
@@ -53,6 +61,53 @@ function Customization:_ConnectButtonClickedEvent(btn: ImageButton | TextButton,
 
         fn()
     end)
+end
+
+function Customization:_PopulateTypes(btn)
+    local assetFolder = CONFIG.ASSET_FOLDER[btn.Name]
+    if not assetFolder then return end
+
+    for _, child in TypesFrame:GetChildren() do
+        if child.Name ~= "Template" and child:GetAttribute("TypeButton") then
+            child:Destroy()
+        end
+    end
+
+    local template = TypesFrame:FindFirstChild("Template")
+    if not template then return end
+
+    local items = assetFolder:GetChildren()
+
+    for i, item in ipairs(items) do
+        local itemName = "Type " .. tostring(i)
+
+        local newBtn = template:Clone()
+        newBtn.Name = itemName
+        newBtn.Visible = true
+        newBtn:SetAttribute("TypeButton", true)
+
+        newBtn.TypeNumber.Text = itemName
+
+        local yPos = 0.106 + (i - 1) * 0.067
+        newBtn.Position = UDim2.new(newBtn.Position.X.Scale, 0, yPos, newBtn.Position.Y.Offset)
+
+        newBtn.Parent = TypesFrame
+
+        self:_ConnectButtonClickedEvent(newBtn, function()
+            local char = PreviewChar
+            local fn = CONFIG.EQUIP_FUNCTION[btn.Name]
+            if not fn then return end
+
+            print("FN found")
+
+            local model = assetFolder:FindFirstChild(itemName)
+            if not model then return end
+
+            print("Model: ", model)
+
+            fn(char, model)
+        end)
+    end
 end
 
 function Customization:_CreateXSlider(sliderButton: ImageButton, callback: (alpha: number) -> ())
@@ -134,8 +189,8 @@ function Customization:Init()
                 if self.typeOpened == btn then
                     TypesFrame.Visible = false
                     self.typeOpened = nil
-
                 else
+                    self:_PopulateTypes(btn)
                     TypesFrame.Visible = true
                     self.typeOpened = btn
                 end
@@ -153,8 +208,6 @@ function Customization:Init()
             self:_CreateXSlider(slider, function(alpha)
                 local scale = min + (max - min) * alpha
 
-                print("Scale: ", scale)
-
                 if btn.Name == "Height" then
                     CustomizationUtils.SetCharacterHeight(PreviewChar, scale)
                 elseif btn.Name == "Body Type" then
@@ -162,14 +215,6 @@ function Customization:Init()
                 end
             end)
         end
-    end
-
-    for _, typeButton in ipairs(TypesFrame:GetChildren()) do
-        if not typeButton:IsA("ImageButton") and not typeButton:IsA("TextButton") then continue end
-        print("Type Button: ", typeButton)
-        self:_ConnectButtonClickedEvent(typeButton, function()
-            print("Types opened: ", self.typeOpened, " Types: Type ", typeButton.Name)
-        end)
     end
 
     CustomizationUtils.ApplyCustomizationDataToCharacter(PreviewChar, self.defaultCustomizationData)

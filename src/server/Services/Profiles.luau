@@ -21,15 +21,15 @@ local PROFILE_TEMPLATE: ProfileData = {
 				Clothing = "Saiyan(Starter Oufit)",
 				Race = "Saiyan",
 				Hair = "Type 1",
-				BodyType = .8,
-				Height = .8,
+				BodyType = 1,
+				Height = 1,
 			}
         },
     },
     SlotSelected = "1",
 }
 
-local PlayerStore = ProfileStore.New("PlayerData_TESTV7", PROFILE_TEMPLATE)
+local PlayerStore = ProfileStore.New("PlayerData_TESTV8", PROFILE_TEMPLATE)
 local Profiles: {[Player]: typeof(PlayerStore:StartSessionAsync())} = {}
 local module = {}
 
