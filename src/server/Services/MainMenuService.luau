@@ -43,7 +43,11 @@ function MainMenuService:Init()
         local profile = Profiles:GetProfile(plr)
         if not profile then return end
 
-        profile.Data.SlotSelected = tostring(data.Slot)
+        local slot = tostring(data.Slot)
+
+        if not table.find(profile.Data.UnlockedSlots, slot) then return end
+
+        profile.Data.SlotSelected = slot
     end)
 end
 

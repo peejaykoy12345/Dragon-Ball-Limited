@@ -16,6 +16,7 @@ export type ProfileData = {
 			}
 		},
     },
+	UnlockedSlots: {string},
 	SlotSelected: string,
 }
 
@@ -34,6 +35,7 @@ local PROFILE_TEMPLATE: ProfileData = {
 			}
         },
     },
+	UnlockedSlots = {"1", "2"},
     SlotSelected = "1",
 }
 
