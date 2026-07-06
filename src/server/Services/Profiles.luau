@@ -5,11 +5,16 @@ local Players = game:GetService("Players")
 local ServerPackages = ServerScriptService.ServerPackages
 local ProfileStore = require(ServerPackages.ProfileStore)
 
-local Network = require(ReplicatedStorage.Modules.Network)
+local Modules = ReplicatedStorage.Modules
+local CustomizationUtils = require(Modules.Utilities.Misc.CustomizationUtils)
 
 export type ProfileData = {
     Slots: {
-        [string]: {[string]: {[string]: string | number}},
+        [string]: {
+			[string]: {
+				[string]: string | number | boolean
+			}
+		},
     },
 	SlotSelected: string,
 }
@@ -23,6 +28,9 @@ local PROFILE_TEMPLATE: ProfileData = {
 				Hair = "Type 1",
 				BodyType = 1,
 				Height = 1,
+			},
+			Flags = {
+				HasCustomized = true,
 			}
         },
     },
@@ -78,10 +86,6 @@ end
 function module:Init()
 	Players.PlayerAdded:Connect(PlayerAdded)
 	Players.PlayerRemoving:Connect(PlayerRemoving)
-
-	Network["Main Menu"].queries.GetCustomizationData.listen(function(data, plr)
-		return self:GetSlotData(plr, "Customization")
-	end)
 end
 
 function module:GetProfile(plr: Player)
@@ -125,6 +129,25 @@ function module:IncrementSlotData(plr: Player, dataName: string, amount: any)
 	if not slot then return end
 
 	slot[dataName] += amount
+end
+
+function module:LoadSlotData(plr: Player)
+	local profile = Profiles[plr]
+	if not profile then return end
+
+	local slot = profile.Data.Slots[profile.Data.SlotSelected]
+	if not slot then return end
+
+	local function applyCustomization(char)
+		CustomizationUtils.ApplyCustomizationDataToCharacter(char, slot.Customization)
+	end
+
+	plr.CharacterAdded:Connect(applyCustomization)
+
+	local char = plr.Character
+	if not char then return end
+
+	applyCustomization(char)
 end
 
 return module

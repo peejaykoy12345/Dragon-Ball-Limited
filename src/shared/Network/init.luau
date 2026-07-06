@@ -15,7 +15,25 @@ return {
 	end),
 	["Main Menu"] = ByteNetMax.defineNamespace("Main Menu", function()
 		return {
-			packets = {},
+			packets = {
+				Play = ByteNetMax.definePacket({
+					value = ByteNetMax.struct({})
+				}),
+				ChangeSlot = ByteNetMax.definePacket({
+					value = ByteNetMax.struct({
+						Slot = ByteNetMax.uint8
+					})
+				}),
+				ConfirmCustomization = ByteNetMax.definePacket({
+					value = ByteNetMax.struct({
+						Clothing = ByteNetMax.string,
+						Race = ByteNetMax.string,
+						Hair = ByteNetMax.string,
+						BodyType = ByteNetMax.float32,
+						Height = ByteNetMax.float32,
+					})
+				}),
+			},
 			queries = {
 				GetCustomizationData = ByteNetMax.defineQuery({
 					request = ByteNetMax.struct({}),
@@ -23,8 +41,8 @@ return {
 						Clothing = ByteNetMax.string,
 						Race = ByteNetMax.string,
 						Hair = ByteNetMax.string,
-						BodyType = ByteNetMax.uint8,
-						Height = ByteNetMax.uint8,
+						BodyType = ByteNetMax.float32,
+						Height = ByteNetMax.float32,
 						HasCustomized = ByteNetMax.bool,
 					}),
 				})

@@ -12,6 +12,8 @@ local Appearance = CustomizationOptions:WaitForChild("Appearance")
 local CharacterAppearance = Appearance:WaitForChild("CharacterApperance")
 local TypesFrame = CharacterAppearance:WaitForChild("Types") :: Frame
 
+local ConfirmButton = Appearance:WaitForChild("Confirm") :: ImageButton
+
 local ViewportFrame = ScreenGui:WaitForChild("ViewportFrame") :: ViewportFrame
 local PreviewChar = ViewportFrame:WaitForChild("Preview")
 
@@ -19,6 +21,7 @@ local CustomizationUtils = require(ReplicatedStorage.Modules.Utilities.Misc.Cust
 
 local Network = require(ReplicatedStorage.Modules.Network)
 local MainMenuNamespace = Network["Main Menu"]
+local MainMenuPackets = MainMenuNamespace.packets
 local MainMenuQueries = MainMenuNamespace.queries
 local GetCustomizationData = MainMenuQueries.GetCustomizationData
 
@@ -98,14 +101,14 @@ function Customization:_PopulateTypes(btn)
             local fn = CONFIG.EQUIP_FUNCTION[btn.Name]
             if not fn then return end
 
-            print("FN found")
-
             local model = assetFolder:FindFirstChild(itemName)
             if not model then return end
 
-            print("Model: ", model)
-
             fn(char, model)
+
+            if btn.Name == "Head/Hair" then
+                self.customizationData.Hair = itemName
+            end
         end)
     end
 end
@@ -181,7 +184,7 @@ end
 function Customization:Init()
     self.btnClickCooldown = {}
 
-    self.defaultCustomizationData = GetCustomizationData.invoke({})
+    self.customizationData = GetCustomizationData.invoke({})
 
     for _, btn in ipairs(CharacterAppearance:GetChildren()) do
         if table.find(CONFIG.TYPES, btn.Name) then
@@ -209,20 +212,32 @@ function Customization:Init()
                 local scale = min + (max - min) * alpha
 
                 if btn.Name == "Height" then
+                    self.customizationData.Height = scale
                     CustomizationUtils.SetCharacterHeight(PreviewChar, scale)
                 elseif btn.Name == "Body Type" then
+                    self.customizationData.BodyType = scale
                     CustomizationUtils.SetCharacterWidth(PreviewChar, scale)
                 end
             end)
         end
     end
 
-    CustomizationUtils.ApplyCustomizationDataToCharacter(PreviewChar, self.defaultCustomizationData)
+    CustomizationUtils.ApplyCustomizationDataToCharacter(PreviewChar, self.customizationData)
+
+    self:_ConnectButtonClickedEvent(ConfirmButton, function()
+        self:CloseCustomization()
+        MainMenuPackets.ConfirmCustomization.send(self.customizationData)
+    end)
 end
 
 function Customization:OpenCustomization()
     ScreenGui.Enabled = true
     self.Open = true
+end
+
+function Customization:CloseCustomization()
+    ScreenGui.Enabled = false
+    self.Open = false
 end
 
 return Customization

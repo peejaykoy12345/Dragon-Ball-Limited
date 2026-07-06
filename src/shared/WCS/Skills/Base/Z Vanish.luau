@@ -68,7 +68,7 @@ function Skill:OnStartServer(info, buffered)
             }
         )
 
-        MoveUtils:SetPartsProperties(char:GetChildren(), "Transparency", 1, {hrp, hitboxPart})
+        MoveUtils:SetPartsProperties(char:GetDescendants(), "Transparency", 1, {hrp, hitboxPart})
 
         task.wait(.2)
 
@@ -87,7 +87,7 @@ function Skill:OnStartServer(info, buffered)
         local lookDirection = (targetHrp.Position - desiredPosition).Unit
         hrp.CFrame = CFrame.new(desiredPosition, desiredPosition + Vector3.new(lookDirection.X, 0, lookDirection.Z))
 
-        MoveUtils:SetPartsProperties(char:GetChildren(), "Transparency", 0, {hrp, hitboxPart})
+        MoveUtils:SetPartsProperties(char:GetDescendants(), "Transparency", 0, {hrp, hitboxPart})
 
         Cooldown:SetCooldown(char, script.Name, Config.Cooldown)
         Cooldown:CancelCooldown(char, "M1")
