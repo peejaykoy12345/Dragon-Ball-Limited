@@ -18,6 +18,19 @@ function CharacterService:Init()
             SaiyanSetup.Setup(WCS_Character)
         end)
     end)
+
+    local function RegisterHitbox(char: Model)
+        local hitbox = char:FindFirstChild("Hitbox") :: BasePart
+        if hitbox then
+            hitbox:AddTag("Hitbox")
+        end
+    end
+
+    for _, livingBeing in ipairs(workspace.LivingBeings:GetChildren()) do
+        RegisterHitbox(livingBeing)
+    end
+
+    workspace.LivingBeings.ChildAdded:Connect(RegisterHitbox)
 end
 
 return CharacterService

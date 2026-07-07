@@ -14,6 +14,7 @@
 
 -- Let me know if you come across any bugs or errors!
 
+local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterPlayer = game:GetService("StarterPlayer")
 local Players = game:GetService("Players")
@@ -34,8 +35,16 @@ local signal = require(script.Signal)
 local Timer = require(script.Timer)
 
 local overlapParamsHumanoid = OverlapParams.new()
-overlapParamsHumanoid.FilterDescendantsInstances = {aliveFolder}
+overlapParamsHumanoid.FilterDescendantsInstances = CollectionService:GetTagged("Hitbox")
 overlapParamsHumanoid.FilterType = Enum.RaycastFilterType.Include
+
+CollectionService:GetInstanceAddedSignal("Hitbox"):Connect(function()
+	overlapParamsHumanoid.FilterDescendantsInstances = CollectionService:GetTagged("Hitbox")
+end)
+
+CollectionService:GetInstanceRemovedSignal("Hitbox"):Connect(function()
+	overlapParamsHumanoid.FilterDescendantsInstances = CollectionService:GetTagged("Hitbox")
+end)
 
 local overlapParamsObject = OverlapParams.new()
 overlapParamsObject.FilterDescendantsInstances = {projectileFolder}
