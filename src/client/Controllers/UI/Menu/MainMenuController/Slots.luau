@@ -10,6 +10,7 @@ local Modules = ReplicatedStorage.Modules
 local Network = require(Modules.Network)
 local MainMenuNamespace = Network["Main Menu"]
 local MainMenuPackets = MainMenuNamespace.packets
+local MainMenuQueries = MainMenuNamespace.queries
 
 local CONFIG = {
     BUTTON_CLICK_COOLDOWN = 0.5,
@@ -55,6 +56,22 @@ end
 function Slots:OpenUI()
     ScreenGui.Enabled = true
     self.Open = true
+
+    local slotData = MainMenuQueries.GetSlotData.invoke({})
+    for slotNumber, data in ipairs(slotData) do
+        local slotName = tostring(slotNumber)
+        local frame = SlotsFrame:FindFirstChild(slotName)
+        if not frame then continue end
+
+        frame:WaitForChild("Lv.").Text = "Lv. " .. tostring(data.Level)
+
+        local infoFrame = frame:WaitForChild("Info")
+        local powerLevelInput = infoFrame:WaitForChild("Power Level Number") :: TextLabel
+        local raceInput = infoFrame:WaitForChild("RaceInput") :: TextLabel
+
+        powerLevelInput.Text = data.PowerLevel
+        raceInput.Text = data.Race
+    end
 end
 
 function Slots:CloseUI()

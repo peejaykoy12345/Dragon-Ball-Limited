@@ -19,6 +19,12 @@ export type ProfileData = {
 				Hair: string,
 				BodyType: number,
 				Height: number,
+			},
+			Stats: {
+				PowerLevel: number,
+			},
+			Flags: {
+				HasCustomized: boolean,
 			}
 		},
     },
@@ -37,16 +43,20 @@ local PROFILE_TEMPLATE: ProfileData = {
 				BodyType = 1,
 				Height = 1,
 			},
+			Stats = {
+				PowerLevel = 500,
+				Level = 1,
+			},
 			Flags = {
 				HasCustomized = true,
-			}
+			},
         },
     },
 	UnlockedSlots = {"1", "2"},
     SlotSelected = "1",
 }
 
-local PlayerStore = ProfileStore.New("PlayerData_TESTV9", PROFILE_TEMPLATE)
+local PlayerStore = ProfileStore.New("PlayerData_TESTV11", PROFILE_TEMPLATE)
 local Profiles: {[Player]: typeof(PlayerStore:StartSessionAsync())} = {}
 local module = {}
 
@@ -110,23 +120,31 @@ function module:GetProfile(plr: Player)
 	return Profiles[plr]
 end
 
+function module:_DeepCopy(tbl)
+	local copy = {}
+	for k, v in tbl do
+		if type(v) == "table" then
+			copy[k] = self:_DeepCopy(v)
+		else
+			copy[k] = v
+		end
+	end
+	return copy
+end
+
 function module:_EnsureSlot(profile)
 	local slotKey = profile.Data.SlotSelected
 	if profile.Data.Slots[slotKey] then return profile.Data.Slots[slotKey] end
 
 	local template = profile.Data.Slots["Template"]
-	local newSlot = {}
+	local newSlot = self:_DeepCopy(template)
 
-	for k, v in template do
-		if type(v) == "table" then
-			local copy = {}
-			for k2, v2 in v do
-				copy[k2] = v2
-			end
-			newSlot[k] = copy
-		else
-			newSlot[k] = v
-		end
+	local raceData = newSlot.Customization.RaceData
+
+	if type(raceData.PowerLevel) == "table" then
+		local min, max = raceData.PowerLevel[1], raceData.PowerLevel[2]
+		newSlot.Stats.PowerLevel = math.random(min, max)
+		raceData.PowerLevel = nil
 	end
 
 	profile.Data.Slots[slotKey] = newSlot

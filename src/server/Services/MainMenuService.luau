@@ -12,13 +12,6 @@ local MainMenuQueries = MainMenuNamespace.queries
 local MainMenuService = {}
 
 function MainMenuService:Init()
-    MainMenuQueries.GetCustomizationData.listen(function(data, plr)
-        local customizationData = Profiles:GetSlotData(plr, "Customization")
-        customizationData.HasCustomized = Profiles:GetSlotData(plr, "Flags").HasCustomized
-
-		return customizationData
-	end)
-
     MainMenuPackets.ConfirmCustomization.listen(function(data, plr)
         local profile = Profiles:GetProfile(plr)
         if not profile then return end
@@ -48,6 +41,42 @@ function MainMenuService:Init()
         if not table.find(profile.Data.UnlockedSlots, slot) then return end
 
         profile.Data.SlotSelected = slot
+    end)
+
+    MainMenuQueries.GetCustomizationData.listen(function(data, plr)
+        local customizationData = Profiles:GetSlotData(plr, "Customization")
+        customizationData.HasCustomized = Profiles:GetSlotData(plr, "Flags").HasCustomized
+
+		return customizationData
+	end)
+
+    MainMenuQueries.GetSlotData.listen(function(_, plr)
+        local profile = Profiles:GetProfile(plr)
+
+        local sortedKeys = {}
+
+        for key in pairs(profile.Data.Slots) do
+            if key == "Template" then continue end
+            table.insert(sortedKeys, key)
+        end
+
+        table.sort(sortedKeys, function(a, b)
+            return tonumber(a) < tonumber(b)
+        end)
+
+        local data = {}
+
+        for _, key in ipairs(sortedKeys) do
+            local slot = profile.Data.Slots[key]
+
+            table.insert(data, {
+                Race = slot.Customization.Race,
+                PowerLevel = slot.Stats.PowerLevel,
+                Level = slot.Stats.Level,
+            })
+        end
+
+        return data
     end)
 end
 

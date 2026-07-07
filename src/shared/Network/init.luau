@@ -46,7 +46,15 @@ return {
 						Height = ByteNetMax.float32,
 						HasCustomized = ByteNetMax.bool,
 					}),
-				})
+				}),
+				GetSlotData = ByteNetMax.defineQuery({
+					request = ByteNetMax.struct({}),
+					response = ByteNetMax.array(ByteNetMax.struct({
+						Race = ByteNetMax.string,
+						PowerLevel = ByteNetMax.uint32,
+						Level = ByteNetMax.uint32,
+					})),
+				}),
 			},
 		}
 	end),
