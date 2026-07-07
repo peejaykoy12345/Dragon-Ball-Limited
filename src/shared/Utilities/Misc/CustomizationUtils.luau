@@ -235,6 +235,40 @@ function CustomizationUtils.SetCharacterWidth(char: Model, scale: number)
 	CustomizationUtils._ApplyScale(char)
 end
 
+function CustomizationUtils.ApplyRaceAppearance(char: Model, raceName: string, raceData)
+	if raceName == "Saiyan" then
+		local hasTail = raceData.HasTail
+
+		if not hasTail then return end
+
+		local LowerTorso = char:FindFirstChild("LowerTorso")
+		if not LowerTorso then return end
+
+		local TailAttachment = LowerTorso:FindFirstChild("WaistBackAttachment") :: Attachment
+		if not TailAttachment then return end
+
+		local saiyanTailTemplate = Models.Tails:FindFirstChild("Saiyan Tail")
+		if not saiyanTailTemplate then return end
+
+		local tail = saiyanTailTemplate:Clone() :: Model
+		tail:SetPrimaryPartCFrame(TailAttachment.WorldCFrame * CFrame.Angles(0, math.rad(180), 0))
+
+		local tailPart = tail:FindFirstChild("Tail")
+		if not tailPart then
+			warn(`Tail part not found for {tail.Name}`)
+			return
+		end
+
+		local weld = Instance.new("WeldConstraint")
+		weld.Name = "TailWeldConstraint"
+		weld.Part0 = LowerTorso
+		weld.Part1 = tailPart
+		weld.Parent = tail
+
+		tail.Parent = LowerTorso
+	end
+end
+
 function CustomizationUtils.ApplyCustomizationDataToCharacter(char: Model, data: {[string]: string | number})
 	local height = data.Height or 1
 	local bodyType = data.BodyType or 1
@@ -250,6 +284,10 @@ function CustomizationUtils.ApplyCustomizationDataToCharacter(char: Model, data:
 		else
 			warn("ApplyCustomizationDataToCharacter: Hair not found:", data.Hair)
 		end
+	end
+
+	if data.Race then
+		CustomizationUtils.ApplyRaceAppearance(char, data.Race :: string, data.RaceData or {})
 	end
 
 	if data.Clothing then

@@ -40,6 +40,7 @@ return {
 					response = ByteNetMax.struct({
 						Clothing = ByteNetMax.string,
 						Race = ByteNetMax.string,
+						RaceData = ByteNetMax.unknown,
 						Hair = ByteNetMax.string,
 						BodyType = ByteNetMax.float32,
 						Height = ByteNetMax.float32,

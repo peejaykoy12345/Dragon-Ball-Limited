@@ -7,12 +7,18 @@ local ProfileStore = require(ServerPackages.ProfileStore)
 
 local Modules = ReplicatedStorage.Modules
 local CustomizationUtils = require(Modules.Utilities.Misc.CustomizationUtils)
+local RaceDataTemplate = require(Modules.Configs.RaceDataTemplate)
 
 export type ProfileData = {
     Slots: {
         [string]: {
-			[string]: {
-				[string]: string | number | boolean
+			Customization: {
+				Clothing: string,
+				Race: string,
+				RaceData: {[string]: any},
+				Hair: string,
+				BodyType: number,
+				Height: number,
 			}
 		},
     },
@@ -26,6 +32,7 @@ local PROFILE_TEMPLATE: ProfileData = {
 			Customization = {
 				Clothing = "Saiyan(Starter Oufit)",
 				Race = "Saiyan",
+				RaceData = RaceDataTemplate.Saiyan,
 				Hair = "Type 1",
 				BodyType = 1,
 				Height = 1,
@@ -39,7 +46,7 @@ local PROFILE_TEMPLATE: ProfileData = {
     SlotSelected = "1",
 }
 
-local PlayerStore = ProfileStore.New("PlayerData_TESTV8", PROFILE_TEMPLATE)
+local PlayerStore = ProfileStore.New("PlayerData_TESTV9", PROFILE_TEMPLATE)
 local Profiles: {[Player]: typeof(PlayerStore:StartSessionAsync())} = {}
 local module = {}
 
