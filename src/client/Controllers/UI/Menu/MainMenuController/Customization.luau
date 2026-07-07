@@ -5,6 +5,8 @@ local UserInputService = game:GetService("UserInputService")
 local Assets = ReplicatedStorage.Assets
 local Models = Assets.Models
 
+local IdleAnimation = Assets:WaitForChild("Animations"):WaitForChild("Default"):WaitForChild("Movement"):WaitForChild("Idle") :: Animation
+
 local plr = Players.LocalPlayer
 local ScreenGui = plr:WaitForChild("PlayerGui"):WaitForChild("MainMenu"):WaitForChild("Customization") :: ScreenGui
 local CustomizationOptions = ScreenGui:WaitForChild("Customization options")
@@ -15,11 +17,16 @@ local TypesFrame = CharacterAppearance:WaitForChild("Types") :: Frame
 local ConfirmButton = Appearance:WaitForChild("Confirm") :: ImageButton
 
 local ViewportFrame = ScreenGui:WaitForChild("ViewportFrame") :: ViewportFrame
-local PreviewChar = ViewportFrame:WaitForChild("Preview")
+local PreviewChar = ViewportFrame:WaitForChild("WorldModel"):WaitForChild("Preview")
 
-local CustomizationUtils = require(ReplicatedStorage.Modules.Utilities.Misc.CustomizationUtils)
+local Modules = ReplicatedStorage.Modules
+local Utilities = Modules.Utilities
 
-local Network = require(ReplicatedStorage.Modules.Network)
+local Animation = require(Utilities.Media.Animation)
+
+local CustomizationUtils = require(Utilities.Misc.CustomizationUtils)
+
+local Network = require(Modules.Network)
 local MainMenuNamespace = Network["Main Menu"]
 local MainMenuPackets = MainMenuNamespace.packets
 local MainMenuQueries = MainMenuNamespace.queries
@@ -225,6 +232,8 @@ function Customization:Init()
         self:CloseCustomization()
         MainMenuPackets.ConfirmCustomization.send(self.customizationData)
     end)
+
+    Animation:Play(PreviewChar, IdleAnimation)
 end
 
 function Customization:OpenCustomization()
