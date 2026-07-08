@@ -479,17 +479,33 @@ function FlyController:Init()
 		local isShiftlocked = UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
 		local speed = if self.boostHeld then CONFIG.FLY_SPEED * CONFIG.BOOST_MULTIPLIER * speedScale else CONFIG.FLY_SPEED * speedScale
 
+		local lockOnTarget = self:_GetLockOnTarget(char)
+		local lockOnTargetHrp = lockOnTarget and lockOnTarget:FindFirstChild("HumanoidRootPart")
+
 		local velocity = Vector3.zero
 
 		if forwardScalar ~= 0 or rightScalar ~= 0 then
-			velocity = self:_GetCameraRelativeDirection(forwardScalar, rightScalar) * speed
+			if lockOnTargetHrp or isShiftlocked then
+				local look = hrp.CFrame.LookVector
+				local right = hrp.CFrame.RightVector
+				local direction = (look * forwardScalar) + (right * rightScalar)
+
+				if direction.Magnitude > 1 then
+					direction = direction.Unit
+				end
+
+				velocity = direction * speed
+			else
+				velocity = self:_GetCameraRelativeDirection(forwardScalar, rightScalar) * speed
+			end
 		end
 
 		if self.upHeld or self.downHeld then
 			local vertical = 0
 			if self.upHeld then vertical += 1 end
 			if self.downHeld then vertical -= 1 end
-			velocity = velocity + workspace.CurrentCamera.CFrame.UpVector * vertical * speed
+			
+			velocity = velocity + Vector3.yAxis * vertical * speed
 		end
 
 		if velocity.Magnitude > speed then
@@ -497,9 +513,6 @@ function FlyController:Init()
 		end
 
 		self.linearVelocity.VectorVelocity = velocity
-
-		local lockOnTarget = self:_GetLockOnTarget(char)
-		local lockOnTargetHrp = lockOnTarget and lockOnTarget:FindFirstChild("HumanoidRootPart")
 
 		local forceFacing = char:GetAttribute("ForceFacingPosition")
 		if forceFacing then

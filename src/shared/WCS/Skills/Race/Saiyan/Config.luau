@@ -3,7 +3,7 @@ return {
         Cooldown = 1.5,
         KnockbackPower = 50,
         KnockbackDuration = 2,
-        HitboxWeldOffsetCFrame = CFrame.new(0, 0, -9),
+        HitboxWeldOffsetCFrame = CFrame.new(0, 0, -7),
         BlockParams = {
             Blockable = true,
             BlockDamage = 20
