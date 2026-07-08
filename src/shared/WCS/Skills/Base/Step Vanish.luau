@@ -32,19 +32,48 @@ end
 
 function Skill:OnStartClient()
 	local plr = self.Character.Player
+	local char = plr.Character
+	if not char then return end
+
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
 
 	local playerModule = require(plr:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
 	local moveVector = playerModule:GetControls():GetMoveVector()
 	local forwardScalar, rightScalar = -moveVector.Z, moveVector.X
 
+	local useLockOn = char:GetAttribute("LockOn") and char:FindFirstChild("LockOnTarget")
+		and char:FindFirstChild("LockOnTarget"):IsA("ObjectValue")
+		and char:FindFirstChild("LockOnTarget").Value ~= nil
+
+	local isFlying = char:GetAttribute("Flying")
+	local useHRP = useLockOn and isFlying
+
 	local dir
 	if forwardScalar ~= 0 or rightScalar ~= 0 then
-		local camCFrame = workspace.CurrentCamera.CFrame
-		local direction = (camCFrame.LookVector * forwardScalar) + (camCFrame.RightVector * rightScalar)
-		dir = Vector3.new(direction.X, 0, direction.Z).Unit
+		local look, right
+
+		if useHRP then
+			look = hrp.CFrame.LookVector
+			right = hrp.CFrame.RightVector
+		else
+			look = workspace.CurrentCamera.CFrame.LookVector
+			right = workspace.CurrentCamera.CFrame.RightVector
+		end
+
+		local direction = (look * forwardScalar) + (right * rightScalar)
+
+		if direction.Magnitude > 1 then
+			direction = direction.Unit
+		end
+
+		dir = direction
 	else
-		local camLook = workspace.CurrentCamera.CFrame.LookVector
-		dir = Vector3.new(camLook.X, 0, camLook.Z).Unit
+		if useHRP then
+			dir = hrp.CFrame.LookVector
+		else
+			dir = workspace.CurrentCamera.CFrame.LookVector
+		end
 	end
 
 	SendCFrame.send({
@@ -106,7 +135,7 @@ function Skill:OnStartServer(info, buffered)
 		end)
 	end)
 
-	task.delay(0.5, function()
+	task.delay(2, function()
 		if self.disconnect then
 			self.disconnect()
 			self.disconnect = nil
