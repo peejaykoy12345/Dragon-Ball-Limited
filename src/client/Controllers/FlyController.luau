@@ -469,7 +469,7 @@ function FlyController:Init()
 			return
 		end
 
-		if self.downHeld and self:_IsNearGround(hrp) then
+		if self:_IsNearGround(hrp) then
 			self:_StopFly()
 			return
 		end
