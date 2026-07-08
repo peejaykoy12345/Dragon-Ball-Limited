@@ -9,15 +9,26 @@ local accessOrder: {[Model]: {string}} = {}
 
 function Animation:_GetAnimator(character: Model)
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if not humanoid then
-		warn("No humanoid found")
+	if humanoid then
+		local animator = humanoid:FindFirstChildOfClass("Animator")
+		if not animator then
+			animator = Instance.new("Animator")
+			animator.Parent = humanoid
+		end
+
+		return animator
+	end
+
+	local animationController = character:FindFirstChildOfClass("AnimationController")
+	if not animationController then
+		warn("No humanoid or animation controller found")
 		return nil
 	end
 
-	local animator = humanoid:FindFirstChildOfClass("Animator")
+	local animator = animationController:FindFirstChildOfClass("Animator")
 	if not animator then
 		animator = Instance.new("Animator")
-		animator.Parent = humanoid
+		animator.Parent = animationController
 	end
 
 	return animator

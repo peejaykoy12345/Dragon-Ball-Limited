@@ -1,8 +1,14 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Models = ReplicatedStorage.Assets.Models :: Folder
+local Assets = ReplicatedStorage.Assets
+local Models = Assets.Models :: Folder
 local Clothing = Models:WaitForChild("Clothing") :: Folder
 local Hairs = Models:WaitForChild("Hair") :: Folder
+
+local Animations = Assets.Animations
+local CharacterAnimations = Animations.Characters
+
+local Animation = require(ReplicatedStorage.Modules.Utilities.Media.Animation)
 
 local CustomizationUtils = {}
 
@@ -266,6 +272,8 @@ function CustomizationUtils.ApplyRaceAppearance(char: Model, raceName: string, r
 		weld.Parent = tail
 
 		tail.Parent = LowerTorso
+
+		Animation:Play(tail, CharacterAnimations.Saiyan.SaiyanTail)
 	end
 end
 
