@@ -89,7 +89,12 @@ return {
 						Name = ByteNetMax.string,
 						CFrame = ByteNetMax.cframe,
 					})
-				})
+				}),
+				MoveTowardsLockOnTarget = ByteNetMax.definePacket({
+					value = ByteNetMax.struct({
+						Duration = ByteNetMax.float32,
+					})
+				}),
 			},
 			queries = {},
 		}

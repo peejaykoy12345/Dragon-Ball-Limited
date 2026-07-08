@@ -15,6 +15,7 @@ local Network = require(ReplicatedStorage.Modules.Network)
 local RequestToggleFastFly = Network.Fly.queries.RequestToggleFastFly
 local FlyVelocityOverride = Network.Fly.packets.FlyVelocityOverride
 local StopFlyVelocityOverride = Network.Fly.packets.StopFlyVelocityOverride
+local MoveTowardsLockOnTarget = Network.Skill.packets.MoveTowardsLockOnTarget
 
 local FlyController = {}
 FlyController.isFlying = false
@@ -27,6 +28,8 @@ local CONFIG = {
 	HOLD_DURATION = 0.5,
 	GROUND_CHECK_DISTANCE = 5,
 	BASE_WALK_SPEED = 16,
+	MOVE_TOWARDS_SPEED = 60,
+	MOVE_TOWARDS_STOP_DISTANCE = 2,
 }
 
 local BLOCKED_SKIP = {
@@ -198,6 +201,109 @@ function FlyController:_ApplyVelocityOverride(velocity: Vector3, duration: numbe
 	end)
 end
 
+function FlyController:_StartMoveTowardsTarget(duration: number)
+	local char = self.plr.Character
+	if not char then return end
+
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+
+	local target = self:_GetLockOnTarget(char)
+	if not target then return end
+
+	self:_StopMoveTowardsTarget()
+
+	local tempConstraints = nil
+	if not self.isFlying then
+		local attachment = Instance.new("Attachment")
+		attachment.Name = "MoveToTargetAttachment"
+		attachment.Parent = hrp
+
+		local lv = Instance.new("LinearVelocity")
+		lv.Name = "MoveToTargetVelocity"
+		lv.Attachment0 = attachment
+		lv.RelativeTo = Enum.ActuatorRelativeTo.World
+		lv.MaxForce = math.huge
+		lv.VectorVelocity = Vector3.zero
+		lv.Parent = hrp
+
+		local ao = Instance.new("AlignOrientation")
+		ao.Name = "MoveToTargetAlign"
+		ao.Attachment0 = attachment
+		ao.Mode = Enum.OrientationAlignmentMode.OneAttachment
+		ao.MaxTorque = math.huge
+		ao.Responsiveness = CONFIG.ALIGN_RESPONSIVENESS
+		ao.CFrame = hrp.CFrame.Rotation
+		ao.Parent = hrp
+
+		tempConstraints = {Attachment = attachment, LinearVelocity = lv, AlignOrientation = ao}
+	end
+
+	self.moveTowardsTarget = {
+		Target = target,
+		EndTime = tick() + duration,
+		TempConstraints = tempConstraints,
+	}
+
+	task.delay(duration, function()
+		if self.moveTowardsTarget and self.moveTowardsTarget.EndTime <= tick() then
+			self:_StopMoveTowardsTarget()
+		end
+	end)
+end
+
+function FlyController:_StopMoveTowardsTarget()
+	if not self.moveTowardsTarget then return end
+
+	local data = self.moveTowardsTarget
+	self.moveTowardsTarget = nil
+
+	if data.TempConstraints then
+		data.TempConstraints.LinearVelocity:Destroy()
+		data.TempConstraints.AlignOrientation:Destroy()
+		data.TempConstraints.Attachment:Destroy()
+	end
+end
+
+function FlyController:_UpdateMoveTowardsTarget(hrp: BasePart): boolean
+	if not self.moveTowardsTarget then return false end
+
+	local mtData = self.moveTowardsTarget
+	local targetHrp = mtData.Target and mtData.Target:FindFirstChild("HumanoidRootPart")
+
+	if not targetHrp or tick() >= mtData.EndTime then
+		self:_StopMoveTowardsTarget()
+		return false
+	end
+
+	local toTarget = targetHrp.Position - hrp.Position
+	local velocity = Vector3.zero
+
+	if toTarget.Magnitude > CONFIG.MOVE_TOWARDS_STOP_DISTANCE then
+		velocity = toTarget.Unit * CONFIG.MOVE_TOWARDS_SPEED
+	end
+
+	local facingCFrame = if toTarget.Magnitude > 0.05
+		then CFrame.new(Vector3.zero, toTarget.Unit)
+		else nil
+
+	if self.isFlying and self.linearVelocity then
+		self.linearVelocity.VectorVelocity = velocity
+
+		if facingCFrame and self.alignOrientation then
+			self.alignOrientation.CFrame = facingCFrame
+		end
+	elseif mtData.TempConstraints then
+		mtData.TempConstraints.LinearVelocity.VectorVelocity = velocity
+
+		if facingCFrame then
+			mtData.TempConstraints.AlignOrientation.CFrame = facingCFrame
+		end
+	end
+
+	return true
+end
+
 function FlyController:_StartFly()
 	local char = self.plr.Character
 	if not char then return end
@@ -221,6 +327,7 @@ function FlyController:_StopFly()
 	self.isFlying = false
 	self.IsFlyingChanged:Fire()
 	self.velocityOverride = nil
+	self:_StopMoveTowardsTarget()
 	self:_SetAnimation(nil)
 	self:_DestroyFlyConstraints()
 
@@ -249,15 +356,18 @@ function FlyController:Init()
 	self.downHeld = false
 	self.boostHeld = false
 	self.velocityOverride = nil
+	self.moveTowardsTarget = nil
 
 	local function onCharacterAdded(char)
 		self:_StopFly()
+		self:_StopMoveTowardsTarget()
 		char:SetAttribute("Flying", false)
 
 		local hum = char:WaitForChild("Humanoid")
 
 		hum.Died:Connect(function()
 			self:_StopFly()
+			self:_StopMoveTowardsTarget()
 		end)
 	end
 
@@ -275,6 +385,10 @@ function FlyController:Init()
 		if self.velocityOverride and self.velocityOverride.Name == data.Name then
 			self.velocityOverride = nil
 		end
+	end)
+
+	MoveTowardsLockOnTarget.listen(function(data)
+		self:_StartMoveTowardsTarget(data.Duration)
 	end)
 
 	UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -322,6 +436,10 @@ function FlyController:Init()
 		if StateManager.HasState(char, "Vanish") and self.boostHeld then
 			RequestToggleFastFly.invoke({Status = false})
 			self.boostHeld = false
+		end
+
+		if self:_UpdateMoveTowardsTarget(hrp) then
+			return
 		end
 
 		if not self.isFlying then return end

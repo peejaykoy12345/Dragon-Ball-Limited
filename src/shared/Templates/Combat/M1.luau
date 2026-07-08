@@ -1,4 +1,5 @@
 local Debris = game:GetService("Debris")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Assets = ReplicatedStorage.Assets
@@ -17,6 +18,9 @@ local Cooldown = require(GeneralUtils.Cooldown)
 
 local Animation = require(Modules.Utilities.Media.Animation)
 local ClientFX = require(Modules.Utilities.Media.ClientFX)
+
+local Network = require(ReplicatedStorage.Modules.Network)
+local MoveTowardsLockOnTarget = Network.Skill.packets.MoveTowardsLockOnTarget
 
 local M1 = {}
 M1.__index = M1
@@ -139,7 +143,6 @@ function M1:HandleM1Count(char: Model, cooldown): number
     local maxM1Count = #self.Anims
 
 	task.delay(1, function()
-    -- Dont auto reset if this is for the last m1
     if char and char:GetAttribute("LastM1") == Now_Clock and currentM1Count >= maxM1Count then
             char:SetAttribute("Combo", 0) 
             Cooldown:SetCooldown(char, "M1", cooldown)
@@ -230,6 +233,15 @@ function M1:PlayHitVFX(hitChar: Model, finalHit: boolean)
     end
 end
 
+function M1:_SendMoveTowardsTarget(char: Model, duration: number)
+    local plr = Players:GetPlayerFromCharacter(char)
+    if not plr then return end
+
+    MoveTowardsLockOnTarget.sendTo({
+        Duration = duration,
+    }, plr)
+end
+
 function M1:M1(WCS_Character, info)
     local char, hrp = MoveUtils:GetWCSCharacterContext(WCS_Character)
     if not char or not hrp then return end
@@ -260,6 +272,8 @@ function M1:M1(WCS_Character, info)
     local track = session:PlayAndAddAnimation(char, self.Anims[m1Count])
     local trackLength = MoveUtils:GetTrackLengthOrDefault(track, 0.3, 0.2)
 
+    self:_SendMoveTowardsTarget(char, trackLength)
+
     self:PlaySFX(char, m1Count, "Miss")
     -- self:ShowSwingVFX(char, m1Count)
 
@@ -275,7 +289,7 @@ function M1:M1(WCS_Character, info)
         HitStart = function()
             local hbInfo = {
                 HitboxWeldOffsetCFrame = info.HitboxWeldOffsetCFrame,
-                hitboxSize = info.ComboTimings[m1Count].HitboxSize,
+                HitboxSize = info.ComboTimings[m1Count].HitboxSize,
             }
 
             hitbox = self:CreateHitbox(char, session, hbInfo, function(hitChar)
