@@ -11,6 +11,7 @@ local LockOnController = {}
 local CONFIG = {
 	MAX_DISTANCE = 500,
 	INITIAL_CAMERA_DISTANCE = 18,
+	LOCK_ON_OFFSET = Vector3.new(15, 0, 0),
 }
 
 function LockOnController:_VisualizeRay(origin: Vector3, direction: Vector3)
@@ -59,8 +60,10 @@ function LockOnController:_UpdateLockOnCamera(deltaTime: number)
 	local targetHrp = self.target:FindFirstChild("HumanoidRootPart")
 	if not targetHrp then return end
 
+	local lookAtPosition = targetHrp.CFrame:PointToWorldSpace(CONFIG.LOCK_ON_OFFSET)
+
 	local camPos = camera.CFrame.Position
-	camera.CFrame = CFrame.new(camPos, targetHrp.Position)
+	camera.CFrame = CFrame.new(camPos, lookAtPosition)
 
 	self.cameraPos = camPos
 end
