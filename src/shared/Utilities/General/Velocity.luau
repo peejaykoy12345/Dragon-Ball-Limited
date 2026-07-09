@@ -242,7 +242,7 @@ function Velocity.CreateLV(parent: Instance, params: LinearVelocityParams)
 	return lv, att
 end
 
-function Velocity:ApplyKnockback(attacker: Model, target: Model, knockback: number | Vector3, duration: number)
+function Velocity:ApplyKnockback(attacker: Model, target: Model, knockback: number | Vector3, duration: number, onWallHit: (({HitPosition: Vector3?}) -> ())?)
 	local ehrp = target:FindFirstChild("HumanoidRootPart") :: BasePart
 	local hrp = attacker:FindFirstChild("HumanoidRootPart") :: BasePart
 
@@ -260,9 +260,15 @@ function Velocity:ApplyKnockback(attacker: Model, target: Model, knockback: numb
 	local targetPosition = ehrp.Position
 	local lookDirection = (lookAtPosition - targetPosition).Unit
 	local newCFrame = CFrame.new(targetPosition, targetPosition + Vector3.new(lookDirection.X, 0, lookDirection.Z))
-	ehrp.CFrame = newCFrame
+	ehrp.CFrame = newCFrame * CFrame.new(0, 1, 0)
 
-	local linearVelocity = Velocity.CreateLV(ehrp, {Velocity = direction * knockback})
+	local knockbackVelocity = direction * knockback
+
+	local rayParams = RaycastParams.new()
+	rayParams.FilterType = Enum.RaycastFilterType.Exclude
+	rayParams.FilterDescendantsInstances = {target, attacker}
+
+	local linearVelocity = Velocity.CreateLV(ehrp, {Velocity = knockbackVelocity})
 
 	local anim = Animation:Play(target, KnockbackAnimations.Start, {Priority = 1})
 	local loopThread = task.delay(anim.Length, function()
@@ -272,19 +278,24 @@ function Velocity:ApplyKnockback(attacker: Model, target: Model, knockback: numb
 	StateManager.SetState(target, "Knockback", true)
 
 	local cleanedUp = false
+	local heartbeatConnection
 
-	local function cleanup()
+	local function cleanup(wallPos)
 		if cleanedUp then return end
 		cleanedUp = true
 
 		task.cancel(loopThread)
+
+		if heartbeatConnection then
+			heartbeatConnection:Disconnect()
+			heartbeatConnection = nil
+		end
 
 		if anim then
 			anim:Stop()
 		end
 
 		StateManager.RemoveState(target, "Knockback")
-
 		Animation:Play(target, KnockbackAnimations.End, {Priority = 1})
 
 		if linearVelocity then
@@ -292,9 +303,29 @@ function Velocity:ApplyKnockback(attacker: Model, target: Model, knockback: numb
 		end
 
 		Velocity.ActiveKnockbacks[target] = nil
+
+		if wallPos and onWallHit then
+			onWallHit({HitPosition = wallPos})
+		end
 	end
 
-	local timeoutThread = task.delay(duration, cleanup)
+	heartbeatConnection = RunService.Heartbeat:Connect(function(dt)
+		if not ehrp or not ehrp.Parent then
+			cleanup()
+			return
+		end
+
+		local rayDirection = knockbackVelocity.Unit
+		local result = workspace:Raycast(ehrp.Position, rayDirection * 5, rayParams)
+
+		if result then
+			cleanup(result.Position)
+		end
+	end)
+
+	local timeoutThread = task.delay(duration, function()
+		cleanup()
+	end)
 
 	Velocity.ActiveKnockbacks[target] = {
 		Thread = timeoutThread,

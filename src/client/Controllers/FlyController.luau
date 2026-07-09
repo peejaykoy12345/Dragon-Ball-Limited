@@ -29,7 +29,7 @@ local CONFIG = {
 	GROUND_CHECK_DISTANCE = 5,
 	BASE_WALK_SPEED = 16,
 	MOVE_TOWARDS_SPEED = 60,
-	MOVE_TOWARDS_STOP_DISTANCE = 2,
+	MOVE_TOWARDS_STOP_DISTANCE = 4,
 }
 
 local BLOCKED_SKIP = {
@@ -277,10 +277,12 @@ function FlyController:_UpdateMoveTowardsTarget(hrp: BasePart): boolean
 	end
 
 	local toTarget = targetHrp.Position - hrp.Position
+	local offsetPosition = targetHrp.Position - toTarget.Unit * 2
+	local toOffset = offsetPosition - hrp.Position
 	local velocity = Vector3.zero
 
-	if toTarget.Magnitude > CONFIG.MOVE_TOWARDS_STOP_DISTANCE then
-		velocity = toTarget.Unit * CONFIG.MOVE_TOWARDS_SPEED
+	if toOffset.Magnitude > CONFIG.MOVE_TOWARDS_STOP_DISTANCE then
+		velocity = toOffset.Unit * CONFIG.MOVE_TOWARDS_SPEED
 	end
 
 	local facingCFrame = if toTarget.Magnitude > 0.05
@@ -322,22 +324,26 @@ function FlyController:_StartFly()
 end
 
 function FlyController:_StopFly()
-	if not self.isFlying then return end
+    if not self.isFlying then return end
 
-	self.isFlying = false
-	self.IsFlyingChanged:Fire()
-	self.velocityOverride = nil
-	self:_StopMoveTowardsTarget()
-	self:_SetAnimation(nil)
-	self:_DestroyFlyConstraints()
+    self.isFlying = false
+    self.IsFlyingChanged:Fire()
+    self.velocityOverride = nil
+    self:_StopMoveTowardsTarget()
+    self:_SetAnimation(nil)
+    self:_DestroyFlyConstraints()
 
-	local char = self.plr.Character
-	if char then
-		char:SetAttribute("Flying", false)
-	end
+    local char = self.plr.Character
+    if char then
+        char:SetAttribute("Flying", false)
+        local hum = char:FindFirstChildWhichIsA("Humanoid")
+        if hum then
+            hum.AutoRotate = true
+        end
+    end
 
-	RequestToggleFastFly.invoke({Status = false})
-	self.boostHeld = false
+    RequestToggleFastFly.invoke({Status = false})
+    self.boostHeld = false
 end
 
 function FlyController:Init()
@@ -442,7 +448,24 @@ function FlyController:Init()
 			return
 		end
 
-		if not self.isFlying then return end
+		if not self.isFlying then
+			local lockOnTarget = self:_GetLockOnTarget(char)
+			local lockOnTargetHrp = lockOnTarget and lockOnTarget:FindFirstChild("HumanoidRootPart")
+
+			if lockOnTargetHrp then
+				hum.AutoRotate = false
+				local toTarget = lockOnTargetHrp.Position - hrp.Position
+				toTarget = Vector3.new(toTarget.X, 0, toTarget.Z)
+				if toTarget.Magnitude > 0.05 then
+					hrp.CFrame = CFrame.new(hrp.Position, hrp.Position + toTarget)
+				end
+			else
+				hum.AutoRotate = true
+			end
+
+			return
+		end
+
 		if not self.linearVelocity then return end
 
 		if self.velocityOverride then
@@ -460,7 +483,7 @@ function FlyController:Init()
 
 			local forceFacing = char:GetAttribute("ForceFacingPosition")
 			if forceFacing and self.alignOrientation then
-				local toTarget = forceFacing - hrp.Position
+				local toTarget = Vector3.new(forceFacing.X, hrp.Position.Y, forceFacing.Z) - hrp.Position
 				if toTarget.Magnitude > 0.05 then
 					self.alignOrientation.CFrame = CFrame.new(Vector3.zero, toTarget.Unit)
 				end
@@ -469,7 +492,7 @@ function FlyController:Init()
 			return
 		end
 
-		if self:_IsNearGround(hrp) then
+		if self.downHeld and self:_IsNearGround(hrp) then
 			self:_StopFly()
 			return
 		end
@@ -517,7 +540,7 @@ function FlyController:Init()
 		local forceFacing = char:GetAttribute("ForceFacingPosition")
 		if forceFacing then
 			if self.alignOrientation then
-				local toTarget = forceFacing - hrp.Position
+				local toTarget = Vector3.new(forceFacing.X, hrp.Position.Y, forceFacing.Z)
 				if toTarget.Magnitude > 0.05 then
 					self.alignOrientation.CFrame = CFrame.new(Vector3.zero, toTarget.Unit)
 				end

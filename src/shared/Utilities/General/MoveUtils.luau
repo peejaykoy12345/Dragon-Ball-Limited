@@ -426,7 +426,7 @@ function MoveUtils:FacePlayer(enemyRoot: BasePart, attackerRoot: BasePart)
 			char:SetAttribute("ForceFacingPosition", nil)
 		end
 	end)
-end
+end	
 
 --[[function MoveUtils:PlayHitReactionAnimation(hitChar: Model)
 	local humanoid = hitChar:FindFirstChildOfClass("Humanoid")
