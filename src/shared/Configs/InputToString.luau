@@ -6,4 +6,5 @@ return {
     [Enum.KeyCode.F] = "F",
     [Enum.KeyCode.X] = "X",
     [Enum.KeyCode.Z] = "Z",
+    [Enum.KeyCode.C] = "C",
 }

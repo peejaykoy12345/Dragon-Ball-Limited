@@ -6,6 +6,7 @@ local SKILL_TO_KEY = {
     F = "Block",
     X = "Z Vanish",
     Z = "Step Vanish",
+    C = "Charge Ki",
 }
 
 function Keyboard.HandleInput(plr: Player, input: string, started: boolean)
