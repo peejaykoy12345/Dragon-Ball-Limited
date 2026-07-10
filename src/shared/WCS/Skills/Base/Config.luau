@@ -1,7 +1,7 @@
 return {
     ["Z Vanish"] = {
         Cooldown = 5,
-        StudsBehind = 20,
+        StudsBehind = 40,
     },
     ["Step Vanish"] = {
         Cooldown = 1,

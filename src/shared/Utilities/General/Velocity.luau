@@ -260,7 +260,7 @@ function Velocity:ApplyKnockback(attacker: Model, target: Model, knockback: numb
 	local targetPosition = ehrp.Position
 	local lookDirection = (lookAtPosition - targetPosition).Unit
 	local newCFrame = CFrame.new(targetPosition, targetPosition + Vector3.new(lookDirection.X, 0, lookDirection.Z))
-	ehrp.CFrame = newCFrame * CFrame.new(0, 1, 0)
+	ehrp.CFrame = newCFrame --* CFrame.new(0, 3, 0)
 
 	local knockbackVelocity = direction * knockback
 
@@ -315,11 +315,22 @@ function Velocity:ApplyKnockback(attacker: Model, target: Model, knockback: numb
 			return
 		end
 
+		-- Wall check
 		local rayDirection = knockbackVelocity.Unit
 		local result = workspace:Raycast(ehrp.Position, rayDirection * 5, rayParams)
 
 		if result then
 			cleanup(result.Position)
+			return
+		end
+
+		-- if near the floor and velocity has a downward component, flatten it
+		if knockbackVelocity.Y < 0 then
+			local groundResult = workspace:Raycast(ehrp.Position, Vector3.new(0, -3.5, 0), rayParams)
+			if groundResult then
+				knockbackVelocity = Vector3.new(knockbackVelocity.X, 0, knockbackVelocity.Z)
+				linearVelocity.VectorVelocity = knockbackVelocity
+			end
 		end
 	end)
 
