@@ -46,6 +46,10 @@ local PROFILE_TEMPLATE: ProfileData = {
 			Stats = {
 				PowerLevel = 500,
 				Level = 1,
+				["Ki Control"] = 100,
+				["Ki Damage"] = 25,
+				Defense = 100,
+				Strength = 25,
 			},
 			Flags = {
 				HasCustomized = true,
@@ -56,12 +60,13 @@ local PROFILE_TEMPLATE: ProfileData = {
     SlotSelected = "1",
 }
 
-local PlayerStore = ProfileStore.New("PlayerData_TESTV11", PROFILE_TEMPLATE)
+local PlayerStore = ProfileStore.New("PlayerData_TESTV13", PROFILE_TEMPLATE)
 local Profiles: {[Player]: typeof(PlayerStore:StartSessionAsync())} = {}
 local module = {}
 
 local function setupPlayer(player, profile)
-	
+    local PlayerStatsService = require(ServerScriptService.Services.PlayerStatsService)
+    PlayerStatsService:OnProfileReady(player)
 end
 
 local function PlayerAdded(player: Player)

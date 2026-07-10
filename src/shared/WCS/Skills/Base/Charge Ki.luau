@@ -87,9 +87,11 @@ function Skill:OnStartServer(_, buffered)
 	task.spawn(function()
 		while self.charge do
 			local PlayerStatsService = require(ServerScriptService.Services.PlayerStatsService)
-			local maxValue = PlayerStatsService:GetStat(self.Character.Player, "MaxKi")
+			local maxValue = PlayerStatsService:GetMaxValue(self.Character.Player, "Ki")
 			PlayerStatsService:IncrementStat(self.Character.Player, "Ki", maxValue * Config["Charge Ki"].ChargeRate)
 
+			print("Maxvalue: ", maxValue)
+			print(PlayerStatsService:GetStat(self.Character.Player, "Ki"))
 			task.wait(Config["Charge Ki"].ChargeInterval)
 		end
 	end)
