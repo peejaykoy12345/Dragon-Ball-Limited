@@ -90,8 +90,8 @@ function Skill:OnStartServer(_, buffered)
 			local maxValue = PlayerStatsService:GetMaxValue(self.Character.Player, "Ki")
 			PlayerStatsService:IncrementStat(self.Character.Player, "Ki", maxValue * Config["Charge Ki"].ChargeRate)
 
-			print("Maxvalue: ", maxValue)
-			print(PlayerStatsService:GetStat(self.Character.Player, "Ki"))
+			-- print("Maxvalue: ", maxValue)
+			-- print(PlayerStatsService:GetStat(self.Character.Player, "Ki"))
 			task.wait(Config["Charge Ki"].ChargeInterval)
 		end
 	end)
