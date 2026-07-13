@@ -1,7 +1,5 @@
 local RaceData = {
     Saiyan = {
-        HasTail = true,
-        PowerLevel = {500, 800},
         StartingStats = {
             Strength = 2,
             Defense = 3,
@@ -10,9 +8,5 @@ local RaceData = {
         }
     }
 }
-
-function RaceData.GetRaceData(raceName: string)
-    return RaceData[raceName]
-end
 
 return RaceData

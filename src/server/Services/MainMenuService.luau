@@ -9,6 +9,8 @@ local MainMenuNamespace = Network["Main Menu"]
 local MainMenuPackets = MainMenuNamespace.packets
 local MainMenuQueries = MainMenuNamespace.queries
 
+local RaceData = require(Modules.Configs.RaceData)
+
 local MainMenuService = {}
 
 function MainMenuService:Init()
@@ -16,15 +18,23 @@ function MainMenuService:Init()
         local profile = Profiles:GetProfile(plr)
         if not profile then return end
 
-        local CustomizationData = profile.Data.Slots[profile.Data.SlotSelected].Customization
+        local slot = profile.Data.Slots[profile.Data.SlotSelected]
+        local CustomizationData = slot.Customization
 
         CustomizationData.Height = data.Height
         CustomizationData.BodyType = data.BodyType
         CustomizationData.Hair = data.Hair
         CustomizationData.Race = data.Race
 
-        print("Edited: ", profile.Data.Slots[profile.Data.SlotSelected].Customization)
-        
+        local raceInfo = RaceData[data.Race]
+        if raceInfo and raceInfo.StartingStats then
+            for stat, value in raceInfo.StartingStats do
+                slot.Stats[stat] = value
+            end
+        end
+
+        -- print("Profile:", profile)
+
         Profiles:GetSlotData(plr, "Flags").HasCustomized = true
     end)
 

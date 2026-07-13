@@ -60,7 +60,7 @@ local PROFILE_TEMPLATE: ProfileData = {
     SlotSelected = "1",
 }
 
-local PlayerStore = ProfileStore.New("PlayerData_TESTV13", PROFILE_TEMPLATE)
+local PlayerStore = ProfileStore.New("PlayerData_TESTV14", PROFILE_TEMPLATE)
 local Profiles: {[Player]: typeof(PlayerStore:StartSessionAsync())} = {}
 local module = {}
 
