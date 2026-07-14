@@ -25,6 +25,8 @@ function MainMenuService:Init()
         CustomizationData.BodyType = data.BodyType
         CustomizationData.Hair = data.Hair
         CustomizationData.Race = data.Race
+        CustomizationData.Eyes = data.Eyes
+        CustomizationData.NoseAndMouth = data.NoseAndMouth
 
         local raceInfo = RaceData[data.Race]
         if raceInfo and raceInfo.StartingStats then
@@ -33,7 +35,7 @@ function MainMenuService:Init()
             end
         end
 
-        -- print("Profile:", profile)
+        -- print("Customization:", data)
 
         Profiles:GetSlotData(plr, "Flags").HasCustomized = true
     end)

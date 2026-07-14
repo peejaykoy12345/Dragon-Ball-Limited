@@ -17,6 +17,8 @@ export type ProfileData = {
 				Race: string,
 				RaceData: {[string]: any},
 				Hair: string,
+				Eyes: string,          
+				NoseAndMouth: string,  
 				BodyType: number,
 				Height: number,
 			},
@@ -40,6 +42,8 @@ local PROFILE_TEMPLATE: ProfileData = {
 				Race = "Saiyan",
 				RaceData = RaceDataTemplate.Saiyan,
 				Hair = "Type 1",
+				Eyes = "Type 1",
+				NoseAndMouth = "Type 1",
 				BodyType = 1,
 				Height = 1,
 			},
@@ -60,7 +64,7 @@ local PROFILE_TEMPLATE: ProfileData = {
     SlotSelected = "1",
 }
 
-local PlayerStore = ProfileStore.New("PlayerData_TESTV14", PROFILE_TEMPLATE)
+local PlayerStore = ProfileStore.New("PlayerData_TESTV15", PROFILE_TEMPLATE)
 local Profiles: {[Player]: typeof(PlayerStore:StartSessionAsync())} = {}
 local module = {}
 

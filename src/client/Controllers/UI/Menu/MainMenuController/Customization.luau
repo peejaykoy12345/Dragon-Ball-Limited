@@ -33,13 +33,17 @@ local MainMenuQueries = MainMenuNamespace.queries
 local GetCustomizationData = MainMenuQueries.GetCustomizationData
 
 local CONFIG = {
-    TYPES = {"Head/Hair"},
+    TYPES = {"Head/Hair", "Eyes", "Nose/Mouth"},
     SLIDER = {"Height", "Body Type"},
     ASSET_FOLDER = {
-        ["Head/Hair"] = Models.Hair
+        ["Head/Hair"] = Models.Hair,
+        ["Eyes"] = Models.Eyes,
+        ["Nose/Mouth"] = Models["Nose/Mouth"]
     },
     EQUIP_FUNCTION = {
-        ["Head/Hair"] = CustomizationUtils.PutOnHair
+        ["Head/Hair"] = CustomizationUtils.PutOnHair,
+        ["Nose/Mouth"] = CustomizationUtils.PutOnNoseAndMouth,
+        ["Eyes"] = CustomizationUtils.PutOnEyes,
     },
     SLIDER_MIN_POS = 0.478,
     SLIDER_MAX_POS = 0.878,
@@ -115,6 +119,14 @@ function Customization:_PopulateTypes(btn)
 
             if btn.Name == "Head/Hair" then
                 self.customizationData.Hair = itemName
+            end
+
+            if btn.Name == "Eyes" then
+                self.customizationData.Eyes = itemName
+            end
+
+            if btn.Name == "Nose/Mouth" then
+                self.customizationData.NoseAndMouth = itemName
             end
         end)
     end

@@ -29,6 +29,8 @@ return {
 						Clothing = ByteNetMax.string,
 						Race = ByteNetMax.string,
 						Hair = ByteNetMax.string,
+						Eyes = ByteNetMax.string,
+						NoseAndMouth = ByteNetMax.string,
 						BodyType = ByteNetMax.float32,
 						Height = ByteNetMax.float32,
 					})
@@ -42,6 +44,8 @@ return {
 						Race = ByteNetMax.string,
 						RaceData = ByteNetMax.unknown,
 						Hair = ByteNetMax.string,
+						Eyes = ByteNetMax.string,
+						NoseAndMouth = ByteNetMax.string,
 						BodyType = ByteNetMax.float32,
 						Height = ByteNetMax.float32,
 						HasCustomized = ByteNetMax.bool,

@@ -4,6 +4,8 @@ local Assets = ReplicatedStorage.Assets
 local Models = Assets.Models :: Folder
 local Clothing = Models:WaitForChild("Clothing") :: Folder
 local Hairs = Models:WaitForChild("Hair") :: Folder
+local Eyes = Models:WaitForChild("Eyes") :: Folder
+local NoseAndMouth = Models:WaitForChild("Nose/Mouth") :: Folder
 
 local Animations = Assets.Animations
 local CharacterAnimations = Animations.Characters
@@ -32,6 +34,46 @@ function CustomizationUtils._ResolveRig(char: Model)
 			end
 		end
 	end
+end
+
+function CustomizationUtils.PutOnEyes(char: Model, eyesModel: Model)
+	local head = char:WaitForChild("Head")
+	if not head then return end
+
+	for _, child in head:GetChildren() do
+		if child:IsA("Decal") and child.Name == "Eyes" then
+			child:Destroy()
+		end
+	end
+
+	for _, decal in eyesModel:GetChildren() do
+		if decal:IsA("Decal") and decal.Name == "Eyes" then
+			local newDecal = decal:Clone()
+			newDecal.Parent = head
+		end
+	end
+
+	char:SetAttribute("SourceEyes", eyesModel.Name)
+end
+
+function CustomizationUtils.PutOnNoseAndMouth(char: Model, mouthModel: Model)
+	local head = char:WaitForChild("Head")
+	if not head then return end
+
+	for _, child in head:GetChildren() do
+		if child:IsA("Decal") and child.Name == "Mouth" then
+			child:Destroy()
+		end
+	end
+
+	for _, decal in mouthModel:GetChildren() do
+		if decal:IsA("Decal") and decal.Name == "Mouth" then
+			local newDecal = decal:Clone()
+			newDecal.Parent = head
+		end
+	end
+
+	char:SetAttribute("SourceNoseAndMouth", mouthModel.Name)
 end
 
 function CustomizationUtils.PutOnHair(char: Model, hair: Model)
@@ -296,6 +338,24 @@ function CustomizationUtils.ApplyCustomizationDataToCharacter(char: Model, data:
 
 	if data.Race then
 		CustomizationUtils.ApplyRaceAppearance(char, data.Race :: string, data.RaceData or {})
+	end
+
+	if data.Eyes then
+		local eyesModel = Eyes:FindFirstChild(data.Eyes)
+		if eyesModel then
+			CustomizationUtils.PutOnEyes(char, eyesModel)
+		else
+			warn("ApplyCustomizationDataToCharacter: Eyes not found:", data.Eyes)
+		end
+	end
+
+	if data.NoseAndMouth then
+		local mouthModel = NoseAndMouth:FindFirstChild(data.NoseAndMouth)
+		if mouthModel then
+			CustomizationUtils.PutOnNoseAndMouth(char, mouthModel)
+		else
+			warn("ApplyCustomizationDataToCharacter: NoseAndMouth not found:", data.NoseAndMouth)
+		end
 	end
 
 	if data.Clothing then
